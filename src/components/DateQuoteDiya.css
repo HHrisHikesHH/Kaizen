@@ -1,6 +1,36 @@
+/* Hero: ~280px tall, no background. Kaizen + diya beside. Void is the background. */
 .date-quote-diya {
-  text-align: center;
   margin-bottom: 2rem;
+}
+
+.date-quote-diya__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 280px;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.date-quote-diya__title {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 500;
+  color: var(--color-glow);
+  letter-spacing: 0.15em;
+  margin: 0;
+  text-shadow: 0 0 40px rgba(196, 98, 45, 0.4);
+}
+
+.date-quote-diya__diya,
+.date-quote-diya__diya-slot {
+  flex-shrink: 0;
+}
+
+.date-quote-diya__diya-slot {
+  width: 160px;
+  height: 160px;
 }
 
 .date-quote-diya__date {
@@ -8,6 +38,7 @@
   font-size: 0.95rem;
   color: var(--color-ash);
   margin-bottom: 0.5rem;
+  text-align: center;
 }
 
 .date-quote-diya__quote {
@@ -17,11 +48,13 @@
   color: var(--color-ash);
   line-height: 1.6;
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .date-quote-diya__flame {
   color: var(--color-ash);
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   animation: diya-pulse 2.5s ease-in-out infinite;
 }
 

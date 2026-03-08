@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import { useDailyEntry } from '../hooks/useDailyEntry'
 import { useWeekCompletion } from '../hooks/useWeekCompletion'
 import { getTodayDateString } from '../utils/dailyEntry'
 import { DateQuoteDiya } from '../components/DateQuoteDiya'
+import { DiyaVideo } from '../components/DiyaVideo'
 import { HabitCards } from '../components/HabitCards'
 import { NightlyJournal } from '../components/NightlyJournal'
 import { ClosingSection } from '../components/ClosingSection'
@@ -12,6 +13,7 @@ import { WeekDots } from '../components/WeekDots'
 import './HomePage.css'
 
 const JOURNALING_MIN_WORDS = 20
+const DIYA_SCROLL_PIN_THRESHOLD = 180
 
 function countWords(text) {
   return text
@@ -24,8 +26,40 @@ export function HomePage() {
   const { entry, updateEntry, loading } = useDailyEntry()
   const today = getTodayDateString()
   const weekCompletion = useWeekCompletion(today)
+  const diyaSlotRef = useRef(null)
 
   const [phase, setPhase] = useState('active') // 'active' | 'fading' | 'closing' | 'locked'
+  const [diyaPosition, setDiyaPosition] = useState(() => ({ pinned: false, left: null, top: null }))
+
+  const updateDiyaPosition = useCallback(() => {
+    const scrollY = window.scrollY
+    if (scrollY > DIYA_SCROLL_PIN_THRESHOLD) {
+      setDiyaPosition((prev) => (prev.pinned ? prev : { pinned: true, left: null, top: null }))
+    } else {
+      const slot = diyaSlotRef.current
+      if (slot) {
+        const rect = slot.getBoundingClientRect()
+        setDiyaPosition({ pinned: false, left: rect.left, top: rect.top })
+      }
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    updateDiyaPosition()
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(updateDiyaPosition)
+    })
+    return () => cancelAnimationFrame(id)
+  }, [updateDiyaPosition])
+
+  useEffect(() => {
+    window.addEventListener('scroll', updateDiyaPosition, { passive: true })
+    window.addEventListener('resize', updateDiyaPosition)
+    return () => {
+      window.removeEventListener('scroll', updateDiyaPosition)
+      window.removeEventListener('resize', updateDiyaPosition)
+    }
+  }, [updateDiyaPosition])
 
   const updateHabit = useCallback(
     (key, data) => {
@@ -93,9 +127,31 @@ export function HomePage() {
           aria-hidden
         />
         <div className="home-page__content">
+          {/* Single diya: at top sits beside Kaizen; when you scroll down it moves to right 3/4 height */}
+          {diyaPosition.left !== null || diyaPosition.pinned ? (
+          <div
+            className="home-page__diya-float"
+            style={
+              diyaPosition.pinned
+                ? { right: '2rem', bottom: '25%', left: 'auto', top: 'auto' }
+                : { left: diyaPosition.left, top: diyaPosition.top, right: 'auto', bottom: 'auto' }
+            }
+            aria-hidden
+          >
+            <DiyaVideo
+              width={160}
+              height={160}
+              showGlow
+              extinguishing={phase !== 'active'}
+            />
+          </div>
+          ) : null}
           <DateQuoteDiya
             dateStr={entry.date}
             sessionComplete={entry.sessionComplete}
+            extinguishing={phase !== 'active'}
+            diyaSlotRef={diyaSlotRef}
+            showDiyaInSlot={diyaPosition.left === null && !diyaPosition.pinned}
           />
           <HabitCards
             habits={entry.habits}

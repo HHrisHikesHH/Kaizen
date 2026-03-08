@@ -1,0 +1,88 @@
+/* Container: no border, no shadow, transparent. Flame bleeds into void. */
+.diya-video {
+  position: relative;
+  width: var(--diya-width, 160px);
+  height: var(--diya-height, 160px);
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.diya-video--fixed {
+  position: fixed;
+  right: 2rem;
+  bottom: 15%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Radial mask: destroy rectangular edges. Ellipse, solid center, soft falloff. */
+.diya-video__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  mask-image: radial-gradient(
+    ellipse at center,
+    black 20%,
+    transparent 70%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    black 20%,
+    transparent 70%
+  );
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mix-blend-mode: screen;
+  background: transparent;
+  transition: opacity 2000ms ease-in;
+}
+
+.diya-video--extinguishing .diya-video__video {
+  opacity: 0;
+}
+
+/* Ambient glow — pseudo ::after, breathes like a real flame */
+.diya-video--glow::after {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(196, 98, 45, 0.15) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+  animation: diya-breathe 3s ease-in-out infinite;
+  transition: opacity 2000ms ease-in;
+}
+
+.diya-video--extinguishing.diya-video--glow::after {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes diya-breathe {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+.diya-video--extinguishing {
+  transition: opacity 2000ms ease-in;
+}
+
+.diya-video--extinguishing {
+  opacity: 0;
+}

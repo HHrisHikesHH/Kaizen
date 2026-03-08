@@ -1,0 +1,97 @@
+/* Full viewport, relative. Left 65% writing, right 35% void + diya. */
+.journal-page {
+  position: relative;
+  min-height: 100vh;
+}
+
+.journal-page--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.journal-page__loader {
+  font-family: var(--font-body);
+  color: var(--color-ash);
+}
+
+/* Light cast: fixed, right half, gradient from where diya sits (80% 75%) */
+.journal-page__light-cast {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at 80% 75%,
+    rgba(196, 98, 45, 0.07) 0%,
+    rgba(139, 74, 26, 0.04) 30%,
+    transparent 65%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.journal-page__diya {
+  /* DiyaVideo with fixed is already position: fixed, right: 0, bottom: 15% */
+}
+
+/* Writing area: 65% width, in the light */
+.journal-page__writing {
+  position: relative;
+  z-index: 1;
+  width: 58%;
+  max-width: 520px;
+  padding: 2rem 2rem 3rem;
+}
+
+.journal-page__heading {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--color-light);
+  margin-bottom: 1rem;
+}
+
+.journal-page__prompt {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-style: italic;
+  color: var(--color-glow);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.journal-page__textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.9;
+  color: var(--color-parchment);
+  resize: none;
+  outline: none;
+}
+
+.journal-page__textarea::placeholder {
+  color: var(--color-stone);
+  font-style: italic;
+}
+
+.journal-page__wordcount {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--color-ash);
+  margin-top: 0.5rem;
+}
+
+/* Mobile: full width, no diya (handled in JS) */
+@media (max-width: 1023px) {
+  .journal-page__writing {
+    width: 100%;
+    max-width: none;
+  }
+}

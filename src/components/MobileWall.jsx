@@ -1,7 +1,7 @@
 import { FlameIcon } from './FlameIcon'
 import './MobileWall.css'
 
-export function MobileWall() {
+export function MobileWall({ onContinue }) {
   return (
     <div className="mobile-wall">
       <div className="mobile-wall__flame">
@@ -17,6 +17,15 @@ export function MobileWall() {
         Your data stays on your device — for your eyes only.
         This too is part of keeping the practice sacred.
       </p>
+      {onContinue && (
+        <button
+          type="button"
+          className="mobile-wall__continue"
+          onClick={onContinue}
+        >
+          I'm at a computer and have time to sit with this.
+        </button>
+      )}
     </div>
   )
 }

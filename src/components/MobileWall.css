@@ -31,3 +31,21 @@
   line-height: 1.8;
   max-width: 22rem;
 }
+
+.mobile-wall__continue {
+  margin-top: 2rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--color-ash);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mobile-wall__continue:hover {
+  color: var(--color-glow);
+}
