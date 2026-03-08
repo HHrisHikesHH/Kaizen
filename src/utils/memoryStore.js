@@ -48,3 +48,31 @@ export async function ensureMemoryFileInFolder(handle, data = { initialized: tru
   await writable.write(JSON.stringify(data, null, 2))
   await writable.close()
 }
+
+/**
+ * Read kaizen_memory.json from the folder.
+ */
+export async function readMemoryFile(handle) {
+  if (!handle?.getFileHandle) return null
+  try {
+    const fileHandle = await handle.getFileHandle('kaizen_memory.json', { create: false })
+    const file = await fileHandle.getFile()
+    const text = await file.text()
+    return JSON.parse(text)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Update kaizen_memory.json with partial data (merge with existing).
+ */
+export async function updateMemoryFile(handle, updates) {
+  if (!handle?.getFileHandle) return
+  const existing = await readMemoryFile(handle)
+  const data = { ...(existing || {}), ...updates }
+  const fileHandle = await handle.getFileHandle('kaizen_memory.json', { create: true })
+  const writable = await fileHandle.createWritable()
+  await writable.write(JSON.stringify(data, null, 2))
+  await writable.close()
+}

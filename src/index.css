@@ -14,6 +14,8 @@
 
   --font-heading: 'Cormorant Garamond', serif;
   --font-body: 'EB Garamond', serif;
+
+  --glow-opacity: 0.05;
 }
 
 *,
@@ -35,22 +37,88 @@ body {
   background-color: var(--color-void);
   color: var(--color-parchment);
   min-height: 100vh;
-  line-height: 1.6;
+  line-height: 1.8;
+}
+
+/* Hide system cursor when custom cursor is shown (desktop only via .cursor-active) */
+body.cursor-active,
+body.cursor-active * {
+  cursor: none !important;
 }
 
 #root {
   min-height: 100vh;
 }
 
-/* Noise overlay — applied where needed via .noise-overlay */
+/* Global scrollbar */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-stone);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ember);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-stone) transparent;
+}
+
+/* Links — never default blue */
+a {
+  color: inherit;
+}
+
+a:hover {
+  color: var(--color-glow);
+}
+
+/* Focus outline — warm, never blue */
+*:focus-visible {
+  outline: 1px solid var(--color-ember);
+  outline-offset: 3px;
+}
+
+/* Texture overlay — barely perceptible */
+.texture-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Legacy noise overlay — keep for components that use .noise-overlay */
 .noise-overlay::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   z-index: 1;
+}
+
+/* Custom cursor — applied when CustomCursor mounts and body.cursor-active */
+.custom-cursor {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9999;
+  background: var(--color-flame);
+  transition: width 200ms ease, height 200ms ease, opacity 200ms ease;
 }
 
 .page-stub__title {

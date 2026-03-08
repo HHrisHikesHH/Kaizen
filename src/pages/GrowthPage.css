@@ -546,7 +546,8 @@
 .paste-modal__error {
   font-family: var(--font-body);
   font-size: 14px;
-  color: var(--color-ember);
+  font-style: italic;
+  color: var(--color-ash);
   padding: 0 24px 12px;
 }
 

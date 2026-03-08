@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route } from 'react-router-dom'
 import { useIsMobile } from './hooks/useIsMobile'
 import { useMemoryFolder } from './hooks/useMemoryFolder'
 import { useDiyaEntry } from './hooks/useDiyaEntry'
@@ -14,6 +14,8 @@ import { JournalPage } from './pages/JournalPage'
 import { PlanPage } from './pages/PlanPage'
 import { SundayPage } from './pages/SundayPage'
 import { GrowthPage } from './pages/GrowthPage'
+import { SettingsPage } from './pages/SettingsPage'
+import { BrowserWall } from './components/BrowserWall'
 
 const MOBILE_OVERRIDE_KEY = 'kaizen_allow_mobile'
 
@@ -25,6 +27,10 @@ function App() {
   const { folderHandle, setFolderHandle, loading } = useMemoryFolder()
   const hasFolder = !!folderHandle
   const { showDiya, finishDiya, checked } = useDiyaEntry(hasFolder && !loading)
+
+  if (typeof window !== 'undefined' && !('showDirectoryPicker' in window)) {
+    return <BrowserWall />
+  }
 
   const handleMobileContinue = () => {
     try {
@@ -77,7 +83,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter basename="/kaizen">
+    <HashRouter>
       <MemoryProvider folderHandle={folderHandle} setFolderHandle={setFolderHandle}>
         <Routes>
           <Route path="/" element={<AppShell />}>
@@ -87,10 +93,11 @@ function App() {
           <Route path="plan" element={<PlanPage />} />
           <Route path="sunday" element={<SundayPage />} />
           <Route path="growth" element={<GrowthPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
       </MemoryProvider>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 

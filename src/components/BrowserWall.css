@@ -1,0 +1,34 @@
+.browser-wall {
+  min-height: 100vh;
+  background-color: var(--color-void);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.browser-wall__icon {
+  color: var(--color-stone);
+  margin-bottom: 1.5rem;
+}
+
+.browser-wall__title {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--color-ash);
+  margin: 0 0 1.5rem 0;
+  line-height: 1.3;
+}
+
+.browser-wall__body {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-style: italic;
+  color: var(--color-stone);
+  line-height: 2;
+  max-width: 440px;
+  margin: 0;
+}

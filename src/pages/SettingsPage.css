@@ -1,0 +1,204 @@
+/* Settings — functional but still the app. */
+
+.settings-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+}
+
+.settings-page__header {
+  margin-bottom: 56px;
+}
+
+.settings-page__title {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--color-light);
+  margin: 0 0 10px 0;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.settings-page__subtitle {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-style: italic;
+  color: var(--color-ash);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.settings-page__section {
+  margin-bottom: 56px;
+}
+
+.settings-page__section-head {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-parchment);
+  margin: 0 0 16px 0;
+  letter-spacing: -0.01em;
+}
+
+.settings-page__section-head--small {
+  font-size: 18px;
+  color: var(--color-ash);
+}
+
+.settings-page__folder {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-ash);
+  margin: 0 0 8px 0;
+}
+
+.settings-page__size {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--color-stone);
+  margin: 0 0 20px 0;
+}
+
+.settings-page__message {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-glow);
+  margin: 0 0 16px 0;
+}
+
+.settings-page__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-page__link {
+  font-family: var(--font-heading);
+  font-style: italic;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: color 200ms ease;
+}
+
+.settings-page__link--flame {
+  font-size: 18px;
+  color: var(--color-flame);
+}
+
+.settings-page__link--flame:hover:not(:disabled) {
+  color: var(--color-ember);
+}
+
+.settings-page__link--flame:disabled {
+  color: var(--color-ash);
+  cursor: default;
+}
+
+.settings-page__link--ash {
+  font-size: 16px;
+  color: var(--color-ash);
+}
+
+.settings-page__link--ash:hover {
+  color: var(--color-parchment);
+}
+
+.settings-page__prose {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-ash);
+  line-height: 1.9;
+  margin: 0;
+}
+
+.settings-page__prose p {
+  margin: 0 0 12px 0;
+}
+
+.settings-page__prose ol {
+  margin: 0 0 12px 0;
+  padding-left: 1.4em;
+}
+
+.settings-page__prose--about {
+  font-size: 17px;
+  line-height: 2;
+}
+
+.settings-page__version {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-stone);
+  margin: 24px 0 0 0;
+}
+
+.settings-page__name-hint {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--color-stone);
+  margin: 0 0 12px 0;
+}
+
+.settings-page__input {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-parchment);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-stone);
+  padding: 10px 0;
+  width: 100%;
+  max-width: 320px;
+  outline: none;
+  transition: border-color 200ms ease;
+}
+
+.settings-page__input::placeholder {
+  color: var(--color-stone);
+  font-style: italic;
+}
+
+.settings-page__input:focus {
+  border-bottom-color: var(--color-ember);
+  outline: none;
+}
+
+.settings-page__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 7, 4, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+
+.settings-page__modal {
+  max-width: 440px;
+  background: var(--color-deep);
+  border: 1px solid var(--color-stone);
+  border-radius: 8px;
+  padding: 28px 32px;
+}
+
+.settings-page__modal-text {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-parchment);
+  line-height: 1.9;
+  margin: 0 0 24px 0;
+}
+
+.settings-page__modal-actions {
+  display: flex;
+  gap: 20px;
+  justify-content: flex-end;
+}

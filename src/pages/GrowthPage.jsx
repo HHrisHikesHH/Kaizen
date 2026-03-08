@@ -650,8 +650,8 @@ function PasteModal({ type, payload, packageText, error, onPasteChange, onSubmit
         />
         {error && <p className="paste-modal__error">{error}</p>}
         <div className="paste-modal__actions">
-          <button type="button" className="paste-modal__btn" onClick={onClose}>Cancel</button>
-          <button type="button" className="paste-modal__btn paste-modal__btn--primary" onClick={() => onSubmit(pasted)}>Save</button>
+          <button type="button" className="paste-modal__btn" onClick={onClose}>close</button>
+          <button type="button" className="paste-modal__btn paste-modal__btn--primary" onClick={() => onSubmit(pasted)}>Store in memory</button>
         </div>
       </div>
     </div>

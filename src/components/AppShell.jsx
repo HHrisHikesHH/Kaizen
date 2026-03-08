@@ -1,7 +1,19 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useWeekPlan } from '../hooks/useWeekPlan'
 import { getWeekNumber, getDayOfWeek } from '../utils/dateHelpers'
+import { CustomCursor } from './CustomCursor'
 import './AppShell.css'
+
+const ROUTE_GLOW = {
+  '/': 0.08,
+  '/habits': 0.05,
+  '/journal': 0.05,
+  '/plan': 0.03,
+  '/sunday': 0.05,
+  '/growth': 0.03,
+  '/settings': 0.02,
+}
 
 const navItems = [
   { path: '/', label: 'Home', icon: 'home' },
@@ -63,39 +75,68 @@ function NavIcon({ icon }) {
         <line x1="6" y1="20" x2="6" y2="14" />
       </svg>
     ),
+    settings: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    ),
   }
   return <span className="app-shell__icon">{icons[icon] ?? null}</span>
 }
 
 export function AppShell() {
+  const location = useLocation()
   const now = new Date()
   const { plan: weekPlan } = useWeekPlan(now.getFullYear(), getWeekNumber(now))
   const todayDayName = getDayOfWeek(now)
   const todayIntentions = (weekPlan?.intentions?.[todayDayName] ?? []).filter(Boolean)
   const hasIncompleteTodayIntentions = todayIntentions.some((i) => !i.complete)
 
+  useEffect(() => {
+    const path = location.pathname.replace(/\/$/, '') || '/'
+    const opacity = ROUTE_GLOW[path] ?? 0.05
+    document.documentElement.style.setProperty('--glow-opacity', String(opacity))
+  }, [location.pathname])
+
   return (
     <div className="app-shell noise-overlay">
+      <div className="app-shell__glow" aria-hidden />
+      <div className="app-shell__texture texture-overlay" aria-hidden />
+      <CustomCursor />
       <aside className="app-shell__sidebar">
-        {navItems.map(({ path, label, icon, showDot }) => (
-          <NavLink
-            key={path}
-            to={path}
-            end={path === '/'}
-            className={({ isActive }) =>
-              `app-shell__nav-link ${isActive ? 'app-shell__nav-link--active' : ''}`
-            }
-            title={label}
-          >
-            <NavIcon icon={icon} />
-            {showDot && hasIncompleteTodayIntentions && (
-              <span className="app-shell__nav-dot" aria-hidden />
-            )}
-          </NavLink>
-        ))}
+        <div className="app-shell__nav-main">
+          {navItems.map(({ path, label, icon, showDot }) => (
+            <NavLink
+              key={path}
+              to={path}
+              end={path === '/'}
+              className={({ isActive }) =>
+                `app-shell__nav-link ${isActive ? 'app-shell__nav-link--active' : ''}`
+              }
+              title={label}
+            >
+              <NavIcon icon={icon} />
+              {showDot && hasIncompleteTodayIntentions && (
+                <span className="app-shell__nav-dot" aria-hidden />
+              )}
+            </NavLink>
+          ))}
+        </div>
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `app-shell__nav-link app-shell__nav-link--settings ${isActive ? 'app-shell__nav-link--active' : ''}`
+          }
+          title="Memory & Practice"
+        >
+          <NavIcon icon="settings" />
+        </NavLink>
       </aside>
       <main className="app-shell__main">
-        <Outlet />
+        <div key={location.key} className="page-transition">
+          <Outlet />
+        </div>
       </main>
     </div>
   )
