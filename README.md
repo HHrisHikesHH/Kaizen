@@ -1,8 +1,6 @@
 # Kaizen
 
-<video width="100%" autoplay loop muted playsinline>
-  <source src="assets/diya.mp4" type="video/mp4">
-</video>
+![Diya](assets/diya.gif)
 
 Kaizen is not a habit tracker. It is a digital ashram — a sacred daily ritual space for self-transformation through observation, reflection, and presence. The name comes from the Japanese philosophy of continuous improvement: small steps, every day, compounding into profound change. The deeper inspiration is the introspective practices of those who conquered themselves by observing themselves honestly — Buddha, Marcus Aurelius, Miyamoto Musashi, Swami Vivekananda. This app is not about crushing goals. It is about becoming unshakable, through awareness, not force.
 
