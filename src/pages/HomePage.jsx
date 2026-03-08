@@ -22,6 +22,7 @@ import './HomePage.css'
 
 const JOURNALING_MIN_WORDS = 20
 const DIYA_SCROLL_PIN_THRESHOLD = 180
+const CLOSING_FLOW_KEY = 'kaizen-closing-flow'
 
 function countWords(text) {
   return text
@@ -47,6 +48,8 @@ export function HomePage() {
 
   const [phase, setPhase] = useState('active') // 'active' | 'fading' | 'closing' | 'locked'
   const [diyaPosition, setDiyaPosition] = useState(() => ({ pinned: false, left: null, top: null }))
+  const closingFlowStartedRef = useRef(false)
+  const closingTimeoutsRef = useRef([])
 
   const updateDiyaPosition = useCallback(() => {
     const scrollY = window.scrollY
@@ -78,6 +81,40 @@ export function HomePage() {
     }
   }, [updateDiyaPosition])
 
+  useEffect(() => {
+    closingFlowStartedRef.current = false
+    try {
+      sessionStorage.removeItem(CLOSING_FLOW_KEY)
+    } catch (_) {}
+  }, [entry?.date])
+
+  useEffect(() => {
+    if (!entry?.sessionComplete || !entry?.divaExtinguished || phase !== 'active') return
+    if (closingFlowStartedRef.current) return
+
+    try {
+      const closingFlowActive = sessionStorage.getItem(CLOSING_FLOW_KEY)
+      if (closingFlowActive) {
+        // Resuming after e.g. Strict Mode remount: show closing screen then locked
+        setPhase('closing')
+        const t = setTimeout(() => setPhase('locked'), 4000)
+        closingTimeoutsRef.current = [t]
+        return
+      }
+    } catch (_) {}
+
+    setPhase('locked')
+  }, [entry?.sessionComplete, entry?.divaExtinguished, phase])
+
+  useEffect(() => {
+    if (phase === 'locked') {
+      closingFlowStartedRef.current = false
+      try {
+        sessionStorage.removeItem(CLOSING_FLOW_KEY)
+      } catch (_) {}
+    }
+  }, [phase])
+
   const updateHabit = useCallback(
     (key, data) => {
       updateEntry({ habits: { [key]: data } })
@@ -104,6 +141,12 @@ export function HomePage() {
 
 
   const handleComplete = useCallback(() => {
+    closingTimeoutsRef.current.forEach(clearTimeout)
+    closingTimeoutsRef.current = []
+    closingFlowStartedRef.current = true
+    try {
+      sessionStorage.setItem(CLOSING_FLOW_KEY, '1')
+    } catch (_) {}
     updateEntry({ sessionComplete: true, divaExtinguished: true })
     setPhase('fading')
     if (folderHandle && entry?.date) {
@@ -114,9 +157,17 @@ export function HomePage() {
         if (summary) saveWeekSummary(summary, folderHandle)
       })
     }
-    setTimeout(() => setPhase('closing'), 1500)
-    setTimeout(() => setPhase('locked'), 4500)
+    const t1 = setTimeout(() => setPhase('closing'), 1500)
+    const t2 = setTimeout(() => setPhase('locked'), 5500)
+    closingTimeoutsRef.current = [t1, t2]
   }, [updateEntry, folderHandle, entry?.date])
+
+  useEffect(() => {
+    return () => {
+      closingTimeoutsRef.current.forEach(clearTimeout)
+      closingTimeoutsRef.current = []
+    }
+  }, [])
 
   if (loading || !entry) {
     return (
@@ -142,16 +193,18 @@ export function HomePage() {
 
   return (
     <>
-      {showClosingScreen && (
-        <ClosingScreen
-          variant={
-            entry?.date &&
-            new Date(entry.date + 'T12:00:00').getDay() === 6
-              ? 'saturday'
-              : 'default'
-          }
-        />
-      )}
+      {showClosingScreen &&
+        createPortal(
+          <ClosingScreen
+            variant={
+              entry?.date &&
+              new Date(entry.date + 'T12:00:00').getDay() === 6
+                ? 'saturday'
+                : 'default'
+            }
+          />,
+          document.body
+        )}
 
       <div
         className={`home-page ${phase === 'fading' ? 'home-page--fading' : ''}`}

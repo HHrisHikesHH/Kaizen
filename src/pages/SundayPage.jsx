@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useMemory } from '../context/MemoryContext'
 import { useSundaySession } from '../hooks/useSundaySession'
 import { useDailyEntry } from '../hooks/useDailyEntry'
@@ -27,6 +28,8 @@ function getDaysUntilSunday() {
   return day === 0 ? 0 : 7 - day
 }
 
+const SUNDAY_CLOSING_FLOW_KEY = 'kaizen-sunday-closing-flow'
+
 export function SundayPage() {
   const today = new Date()
   const isSunday = today.getDay() === 0
@@ -51,6 +54,7 @@ export function SundayPage() {
     if (state?.eveningComplete) setShowReflection(true)
   }, [state?.eveningComplete])
   const [phase, setPhase] = useState('idle')
+  const sundayClosingTimeoutRef = useRef([])
   const [sundayJournalEntry, setSundayJournalEntry] = useState('')
   const [sundayPrompt] = useState(
     () => SUNDAY_PROMPTS[weekNumber % SUNDAY_PROMPTS.length]
@@ -131,9 +135,43 @@ export function SundayPage() {
 
   const handleSundayFinalClose = useCallback(() => {
     if (sundayJournalEntry.trim()) handleSundayJournalSave()
+    try {
+      sessionStorage.setItem(SUNDAY_CLOSING_FLOW_KEY, '1')
+    } catch (_) {}
+    sundayClosingTimeoutRef.current.forEach(clearTimeout)
+    sundayClosingTimeoutRef.current = []
     setPhase('closing')
-    setTimeout(() => setPhase('done'), 3000)
+    const t = setTimeout(() => {
+      setPhase('done')
+      try {
+        sessionStorage.removeItem(SUNDAY_CLOSING_FLOW_KEY)
+      } catch (_) {}
+    }, 3000)
+    sundayClosingTimeoutRef.current = [t]
   }, [sundayJournalEntry, handleSundayJournalSave])
+
+  useEffect(() => {
+    if (!isSunday || phase !== 'idle') return
+    try {
+      if (sessionStorage.getItem(SUNDAY_CLOSING_FLOW_KEY)) {
+        setPhase('closing')
+        const t = setTimeout(() => {
+          setPhase('done')
+          try {
+            sessionStorage.removeItem(SUNDAY_CLOSING_FLOW_KEY)
+          } catch (_) {}
+        }, 3000)
+        sundayClosingTimeoutRef.current = [t]
+      }
+    } catch (_) {}
+  }, [isSunday, phase])
+
+  useEffect(() => {
+    return () => {
+      sundayClosingTimeoutRef.current.forEach(clearTimeout)
+      sundayClosingTimeoutRef.current = []
+    }
+  }, [])
 
   if (!isSunday) {
     return (
@@ -168,7 +206,8 @@ export function SundayPage() {
 
   return (
     <div className="sunday-page">
-      {phase === 'closing' && <ClosingScreen variant="sunday" />}
+      {phase === 'closing' &&
+        createPortal(<ClosingScreen variant="sunday" />, document.body)}
 
       <div className="sunday-page__glow" aria-hidden />
       <div className="sunday-page__content">
