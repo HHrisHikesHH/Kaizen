@@ -42,6 +42,20 @@
   border-left-color: var(--color-flame);
 }
 
+.app-shell__nav-link {
+  position: relative;
+}
+
+.app-shell__nav-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-flame);
+}
+
 .app-shell__icon {
   display: flex;
   align-items: center;

@@ -1,0 +1,343 @@
+.plan-page {
+  position: relative;
+  min-height: 100%;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.plan-page--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plan-page__loader {
+  font-family: var(--font-body);
+  color: var(--color-ash);
+}
+
+.plan-page__glow {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120vw;
+  height: 50vh;
+  max-height: 360px;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 0%,
+    rgba(196, 98, 45, 0.03) 0%,
+    transparent 60%
+  );
+  z-index: 0;
+}
+
+.plan-page__content {
+  position: relative;
+  z-index: 1;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.plan-page__header {
+  margin-bottom: 2rem;
+}
+
+.plan-page__header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.plan-page__title {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--color-light);
+  margin: 0 0 0.25rem 0;
+}
+
+.plan-page__nav {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--color-ash);
+}
+
+.plan-page__nav-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+
+.plan-page__nav-btn:hover {
+  color: var(--color-parchment);
+}
+
+.plan-page__subtitle {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-style: italic;
+  color: var(--color-ash);
+  margin: 0 0 0.5rem 0;
+}
+
+.plan-page__week-label {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--color-ash);
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.plan-page__past-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-ash);
+  margin: 0.5rem 0 0 0;
+}
+
+.plan-page__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 3rem;
+}
+
+.plan-page__day {
+  min-width: 0;
+}
+
+.plan-page__day-header {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.plan-page__day-name {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--color-ash);
+  letter-spacing: 0.12em;
+  margin-bottom: 0.25rem;
+}
+
+.plan-page__day-num {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 28px;
+  color: var(--color-ash);
+}
+
+.plan-page__day-num--today {
+  color: var(--color-glow);
+}
+
+.plan-page__day-num--past {
+  color: var(--color-stone);
+}
+
+.plan-page__day-num--future {
+  color: var(--color-ash);
+}
+
+.plan-page__day-dot {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-flame);
+  margin: 0.2rem auto 0;
+}
+
+.plan-page__day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.plan-page__intention {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-left: 1px solid var(--color-stone);
+  padding-left: 10px;
+  min-height: 2rem;
+}
+
+.plan-page__intention-text {
+  flex: 1;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-parchment);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  transition: color 0.3s ease, text-decoration-color 0.3s ease;
+}
+
+.plan-page__intention-text:disabled {
+  cursor: default;
+}
+
+.plan-page__intention--done .plan-page__intention-text {
+  color: var(--color-ash);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-stone);
+}
+
+.plan-page__intention-delete {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--color-ash);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.plan-page__intention:hover .plan-page__intention-delete {
+  opacity: 1;
+}
+
+.plan-page__intention-delete:hover {
+  color: var(--color-parchment);
+}
+
+.plan-page__intention--deleting {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.plan-page__add-btn {
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--color-stone);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.35rem 0 0 10px;
+  text-align: left;
+  border-left: 1px solid transparent;
+}
+
+.plan-page__add-btn:hover {
+  color: var(--color-ash);
+}
+
+.plan-page__add-inline {
+  border-left: 1px solid var(--color-stone);
+  padding-left: 10px;
+}
+
+.plan-page__add-input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-parchment);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-ember);
+  padding: 0.35rem 0;
+  outline: none;
+}
+
+.plan-page__add-input::placeholder {
+  color: var(--color-ash);
+}
+
+.plan-page__suggestions {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.plan-page__suggestions-label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--color-ash);
+  margin-bottom: 1rem;
+}
+
+.plan-page__suggestions-flow {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-style: italic;
+  color: var(--color-stone);
+  line-height: 2;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.plan-page__suggestion-phrase {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.plan-page__suggestion-phrase:hover {
+  color: var(--color-ash);
+}
+
+.plan-page__suggestion-sep {
+  color: var(--color-ember);
+  pointer-events: none;
+}
+
+.plan-page__picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: transparent;
+}
+
+.plan-page__day-picker {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 41;
+  background: var(--color-deep);
+  border: 1px solid var(--color-stone);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 160px;
+}
+
+.plan-page__picker-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-ash);
+  margin: 0 0 0.25rem 0;
+}
+
+.plan-page__picker-day {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-parchment);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.35rem 0;
+  text-align: left;
+}
+
+.plan-page__picker-day:hover {
+  color: var(--color-glow);
+}

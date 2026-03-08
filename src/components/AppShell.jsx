@@ -1,11 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useWeekPlan } from '../hooks/useWeekPlan'
+import { getWeekNumber, getDayOfWeek } from '../utils/dateHelpers'
 import './AppShell.css'
 
 const navItems = [
   { path: '/', label: 'Home', icon: 'home' },
   { path: '/habits', label: 'Habits', icon: 'habits' },
   { path: '/journal', label: 'Journal', icon: 'journal' },
-  { path: '/plan', label: 'Plan', icon: 'plan' },
+  { path: '/plan', label: 'Plan', icon: 'plan', showDot: true },
   { path: '/sunday', label: 'Sunday', icon: 'sunday' },
   { path: '/growth', label: 'Growth', icon: 'growth' },
 ]
@@ -66,10 +68,16 @@ function NavIcon({ icon }) {
 }
 
 export function AppShell() {
+  const now = new Date()
+  const { plan: weekPlan } = useWeekPlan(now.getFullYear(), getWeekNumber(now))
+  const todayDayName = getDayOfWeek(now)
+  const todayIntentions = (weekPlan?.intentions?.[todayDayName] ?? []).filter(Boolean)
+  const hasIncompleteTodayIntentions = todayIntentions.some((i) => !i.complete)
+
   return (
     <div className="app-shell noise-overlay">
       <aside className="app-shell__sidebar">
-        {navItems.map(({ path, label, icon }) => (
+        {navItems.map(({ path, label, icon, showDot }) => (
           <NavLink
             key={path}
             to={path}
@@ -80,6 +88,9 @@ export function AppShell() {
             title={label}
           >
             <NavIcon icon={icon} />
+            {showDot && hasIncompleteTodayIntentions && (
+              <span className="app-shell__nav-dot" aria-hidden />
+            )}
           </NavLink>
         ))}
       </aside>

@@ -1,10 +1,15 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import { useDailyEntry } from '../hooks/useDailyEntry'
 import { useWeekCompletion } from '../hooks/useWeekCompletion'
+import { useMemory } from '../context/MemoryContext'
 import { getTodayDateString } from '../utils/dailyEntry'
+import { getWeekNumber, getDayOfWeek } from '../utils/dateHelpers'
+import { generateWeekSummary, saveWeekSummary } from '../utils/aggregateWeek'
+import { useWeekPlan } from '../hooks/useWeekPlan'
 import { DateQuoteDiya } from '../components/DateQuoteDiya'
 import { DiyaVideo } from '../components/DiyaVideo'
 import { HabitCards } from '../components/HabitCards'
+import { TodayIntentions } from '../components/TodayIntentions'
 import { NightlyJournal } from '../components/NightlyJournal'
 import { ClosingSection } from '../components/ClosingSection'
 import { ClosingScreen } from '../components/ClosingScreen'
@@ -23,10 +28,18 @@ function countWords(text) {
 }
 
 export function HomePage() {
+  const { folderHandle } = useMemory()
   const { entry, updateEntry, loading } = useDailyEntry()
   const today = getTodayDateString()
   const weekCompletion = useWeekCompletion(today)
   const diyaSlotRef = useRef(null)
+  const now = new Date()
+  const { plan: weekPlan, toggleIntention: toggleWeekIntention } = useWeekPlan(
+    now.getFullYear(),
+    getWeekNumber(now)
+  )
+  const todayDayName = getDayOfWeek(now)
+  const todayIntentions = (weekPlan?.intentions?.[todayDayName] ?? []).filter(Boolean)
 
   const [phase, setPhase] = useState('active') // 'active' | 'fading' | 'closing' | 'locked'
   const [diyaPosition, setDiyaPosition] = useState(() => ({ pinned: false, left: null, top: null }))
@@ -89,9 +102,17 @@ export function HomePage() {
   const handleComplete = useCallback(() => {
     updateEntry({ sessionComplete: true, divaExtinguished: true })
     setPhase('fading')
+    if (folderHandle && entry?.date) {
+      const d = new Date(entry.date + 'T12:00:00')
+      const year = d.getFullYear()
+      const weekNum = getWeekNumber(d)
+      generateWeekSummary(year, weekNum, folderHandle).then((summary) => {
+        if (summary) saveWeekSummary(summary, folderHandle)
+      })
+    }
     setTimeout(() => setPhase('closing'), 1500)
     setTimeout(() => setPhase('locked'), 4500)
-  }, [updateEntry])
+  }, [updateEntry, folderHandle, entry?.date])
 
   if (loading || !entry) {
     return (
@@ -117,7 +138,16 @@ export function HomePage() {
 
   return (
     <>
-      {showClosingScreen && <ClosingScreen />}
+      {showClosingScreen && (
+        <ClosingScreen
+          variant={
+            entry?.date &&
+            new Date(entry.date + 'T12:00:00').getDay() === 6
+              ? 'saturday'
+              : 'default'
+          }
+        />
+      )}
 
       <div
         className={`home-page ${phase === 'fading' ? 'home-page--fading' : ''}`}
@@ -157,6 +187,12 @@ export function HomePage() {
             habits={entry.habits}
             updateHabit={updateHabit}
           />
+          {todayIntentions.length > 0 && (
+            <TodayIntentions
+              intentions={todayIntentions}
+              onToggle={(id) => toggleWeekIntention(todayDayName, id)}
+            />
+          )}
           <NightlyJournal
             prompt={entry.journal?.prompt ?? ''}
             entry={entry.journal?.entry ?? ''}

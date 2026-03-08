@@ -1,0 +1,17 @@
+export const SUGGESTED_INTENTIONS = [
+  'sit in stillness each morning',
+  'move your body with care',
+  'read before sleep',
+  'eat with full awareness',
+  'write what is honestly true',
+  'spend time without a screen',
+  'call someone you love',
+  'learn something new slowly',
+  'rest without guilt',
+  'observe one habit that no longer serves',
+  'be fully present for one meal',
+  'walk somewhere with no destination',
+  'spend one hour with a book and nothing else',
+  'write a letter you may never send',
+  'watch how you speak to yourself today',
+]
