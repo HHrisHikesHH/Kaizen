@@ -1,0 +1,62 @@
+.app-shell {
+  min-height: 100vh;
+  background-color: var(--color-void);
+  display: flex;
+}
+
+.app-shell__sidebar {
+  width: 56px;
+  flex-shrink: 0;
+  background-color: var(--color-deep);
+  border-right: 1px solid var(--color-stone);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1.5rem;
+  gap: 0.25rem;
+}
+
+@media (max-width: 1023px) {
+  .app-shell__sidebar {
+    display: none;
+  }
+}
+
+.app-shell__nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--color-ash);
+  border-left: 3px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.app-shell__nav-link:hover {
+  color: var(--color-parchment);
+}
+
+.app-shell__nav-link--active {
+  color: var(--color-flame);
+  border-left-color: var(--color-flame);
+}
+
+.app-shell__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.app-shell__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.app-shell__main {
+  flex: 1;
+  min-width: 0;
+  padding: 2rem;
+}

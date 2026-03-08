@@ -1,0 +1,12 @@
+.home-page__title {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--color-light);
+  margin-bottom: 0.5rem;
+}
+
+.home-page__text {
+  font-family: var(--font-body);
+  color: var(--color-parchment);
+}
