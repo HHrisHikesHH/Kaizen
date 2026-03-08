@@ -249,6 +249,7 @@
 /* Closing words river */
 .closing-words-section {
   margin-bottom: 48px;
+  min-width: 0;
 }
 
 .closing-words__heading {
@@ -260,13 +261,15 @@
 
 .closing-words__river {
   text-align: center;
-  max-width: 560px;
+  max-width: min(560px, 100%);
   margin: 0 auto;
   font-family: var(--font-body);
   font-size: 17px;
   font-style: italic;
   line-height: 2.2;
   color: var(--color-parchment);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .closing-words__word--glow {
@@ -278,9 +281,19 @@
   font-size: 19px;
 }
 
+.closing-words__river span span {
+  display: inline;
+}
+
+.closing-words__river > span {
+  display: inline-block;
+  white-space: nowrap;
+  margin: 0 0.1em 0.2em 0;
+}
+
 .closing-words__sep {
   color: var(--color-stone);
-  margin: 0 0.35em;
+  margin: 0 0.15em;
 }
 
 .closing-words__placeholder {

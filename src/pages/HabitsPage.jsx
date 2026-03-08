@@ -16,6 +16,35 @@ const HABIT_LABELS = {
 }
 
 const RETRO_DAYS = 28
+const SCROLL_DURATION_MS = 2500
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+}
+
+function slowSmoothScrollToId(id) {
+  const el = document.getElementById(id)
+  const scrollParent = document.querySelector('.app-shell__main')
+  if (!el || !scrollParent) return
+  const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (reducedMotion) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return
+  }
+  const startTop = scrollParent.scrollTop
+  const elRect = el.getBoundingClientRect()
+  const parentRect = scrollParent.getBoundingClientRect()
+  const targetTop = startTop + (elRect.top - parentRect.top) - 16
+  const start = performance.now()
+  function tick(now) {
+    const elapsed = now - start
+    const p = Math.min(elapsed / SCROLL_DURATION_MS, 1)
+    const eased = easeInOutCubic(p)
+    scrollParent.scrollTop = startTop + (targetTop - startTop) * eased
+    if (p < 1) requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
+}
 
 export function HabitsPage() {
   const { folderHandle } = useMemory()
@@ -105,7 +134,7 @@ export function HabitsPage() {
                           title={`${day.dateStr} — go to journal`}
                           onClick={(e) => {
                             e.preventDefault()
-                            document.getElementById(`journal-${day.dateStr}`)?.scrollIntoView({ behavior: 'smooth' })
+                            slowSmoothScrollToId(`journal-${day.dateStr}`)
                           }}
                         />
                       ) : (
@@ -144,7 +173,7 @@ export function HabitsPage() {
                         className="journal-retro-item__date-link"
                         onClick={(e) => {
                           e.preventDefault()
-                          document.getElementById(`journal-${day.dateStr}`)?.scrollIntoView({ behavior: 'smooth' })
+                          slowSmoothScrollToId(`journal-${day.dateStr}`)
                         }}
                       >
                         <time dateTime={day.dateStr}>
