@@ -30,6 +30,13 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
@@ -38,6 +45,7 @@ body {
   color: var(--color-parchment);
   min-height: 100vh;
   line-height: 1.8;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Hide system cursor when custom cursor is shown (desktop only via .cursor-active) */
@@ -75,6 +83,21 @@ body.cursor-active * {
   scrollbar-color: var(--color-stone) transparent;
 }
 
+/* Smooth scrolling in overflow containers */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overflow-auto,
+  .overflow-y-auto,
+  .overflow-x-auto {
+    scroll-behavior: auto;
+  }
+}
+
 /* Links — never default blue */
 a {
   color: inherit;
@@ -82,6 +105,48 @@ a {
 
 a:hover {
   color: var(--color-glow);
+}
+
+/* Haptic-style click feedback — satisfying press on interactive elements */
+button,
+a,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.app-shell__nav-link,
+.settings-page__link,
+.ready-banner__action,
+.paste-modal__btn,
+.habit-card__circle,
+.nightly-journal__textarea:focus,
+.settings-page__input:focus {
+  transition: transform 90ms ease-out, opacity 90ms ease-out, color 200ms ease, border-color 200ms ease;
+}
+
+button:active,
+a:active,
+[role="button"]:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+input[type="reset"]:active,
+.app-shell__nav-link:active,
+.settings-page__link:active,
+.ready-banner__action:active,
+.paste-modal__btn:active {
+  transform: scale(0.97);
+  opacity: 0.92;
+}
+
+.habit-card__circle:active {
+  transform: scale(0.94);
+}
+
+/* Avoid press effect on inputs when typing */
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):active,
+textarea:active {
+  transform: none;
+  opacity: 1;
 }
 
 /* Focus outline — warm, never blue */

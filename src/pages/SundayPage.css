@@ -116,6 +116,7 @@
   cursor: default;
   overflow-y: auto;
   margin-bottom: 1rem;
+  scroll-behavior: smooth;
 }
 
 .sunday-page__package::-webkit-scrollbar {

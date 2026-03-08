@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useDailyEntry } from '../hooks/useDailyEntry'
 import { useWeekCompletion } from '../hooks/useWeekCompletion'
 import { useMemory } from '../context/MemoryContext'
@@ -160,25 +161,27 @@ export function HomePage() {
           aria-hidden
         />
         <div className="home-page__content">
-          {/* Single diya: at top sits beside Kaizen; when you scroll down it moves to right 3/4 height */}
-          {diyaPosition.left !== null || diyaPosition.pinned ? (
-          <div
-            className="home-page__diya-float"
-            style={
-              diyaPosition.pinned
-                ? { right: '2rem', bottom: '25%', left: 'auto', top: 'auto' }
-                : { left: diyaPosition.left, top: diyaPosition.top, right: 'auto', bottom: 'auto' }
-            }
-            aria-hidden
-          >
-            <DiyaVideo
-              width={160}
-              height={160}
-              showGlow
-              extinguishing={phase !== 'active'}
-            />
-          </div>
-          ) : null}
+          {/* Floating diya: portaled to body so position:fixed is relative to viewport (not the page-transition transform). At top it follows the hero slot; when scrolled past threshold it pins to right, upper third. */}
+          {(diyaPosition.left !== null || diyaPosition.pinned) &&
+            createPortal(
+              <div
+                className="home-page__diya-float"
+                style={
+                  diyaPosition.pinned
+                    ? { right: '4rem', top: '75%', left: 'auto', bottom: 'auto' }
+                    : { left: diyaPosition.left, top: diyaPosition.top, right: 'auto', bottom: 'auto' }
+                }
+                aria-hidden
+              >
+                <DiyaVideo
+                  width={160}
+                  height={160}
+                  showGlow
+                  extinguishing={phase !== 'active'}
+                />
+              </div>,
+              document.body
+            )}
           <DateQuoteDiya
             dateStr={entry.date}
             sessionComplete={entry.sessionComplete}
