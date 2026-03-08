@@ -54,6 +54,16 @@
   opacity: 0.6;
 }
 
+.home-page__reflection-wrap {
+  animation: home-reflection-in 600ms ease;
+  margin-bottom: 2rem;
+}
+
+@keyframes home-reflection-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Floating diya: at top follows hero slot; when scrolled down pins to right 3/4 height with margin */
 .home-page__diya-float {
   position: fixed;

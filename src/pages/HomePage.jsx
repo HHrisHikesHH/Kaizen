@@ -6,6 +6,8 @@ import { getTodayDateString } from '../utils/dailyEntry'
 import { getWeekNumber, getDayOfWeek } from '../utils/dateHelpers'
 import { generateWeekSummary, saveWeekSummary } from '../utils/aggregateWeek'
 import { useWeekPlan } from '../hooks/useWeekPlan'
+import { useLastWeekReflection } from '../hooks/useLastWeekReflection'
+import { ReflectionCard } from '../components/ReflectionCard'
 import { DateQuoteDiya } from '../components/DateQuoteDiya'
 import { DiyaVideo } from '../components/DiyaVideo'
 import { HabitCards } from '../components/HabitCards'
@@ -40,6 +42,7 @@ export function HomePage() {
   )
   const todayDayName = getDayOfWeek(now)
   const todayIntentions = (weekPlan?.intentions?.[todayDayName] ?? []).filter(Boolean)
+  const lastWeekReflection = useLastWeekReflection()
 
   const [phase, setPhase] = useState('active') // 'active' | 'fading' | 'closing' | 'locked'
   const [diyaPosition, setDiyaPosition] = useState(() => ({ pinned: false, left: null, top: null }))
@@ -192,6 +195,17 @@ export function HomePage() {
               intentions={todayIntentions}
               onToggle={(id) => toggleWeekIntention(todayDayName, id)}
             />
+          )}
+          {lastWeekReflection && (
+            <div className="home-page__reflection-wrap">
+              <ReflectionCard
+                userFacingReflection={lastWeekReflection.userFacingReflection}
+                weekNumber={lastWeekReflection.weekNumber}
+                year={lastWeekReflection.year}
+                dateRange={lastWeekReflection.dateRange}
+                compact
+              />
+            </div>
           )}
           <NightlyJournal
             prompt={entry.journal?.prompt ?? ''}

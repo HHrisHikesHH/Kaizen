@@ -1,0 +1,67 @@
+.reflection-card {
+  position: relative;
+  max-width: 680px;
+  width: 100%;
+  background: rgba(17, 14, 9, 0.8);
+  border-left: 3px solid var(--color-flame);
+  border-radius: 0 8px 8px 0;
+  padding: 36px 40px;
+  margin-bottom: 2rem;
+}
+
+.reflection-card--compact {
+  padding: 28px 32px;
+}
+
+.reflection-card__glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 0 12px 12px 0;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(196, 98, 45, 0.08) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+.reflection-card__label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-ash);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem 0;
+}
+
+.reflection-card__gap {
+  height: 20px;
+}
+
+.reflection-card__gap--bottom {
+  height: 32px;
+}
+
+.reflection-card__text {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-style: italic;
+  color: var(--color-light);
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+  white-space: pre-wrap;
+}
+
+.reflection-card__meta {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--color-stone);
+  margin: 0;
+  text-align: right;
+}
+
+.reflection-card--compact .reflection-card__text {
+  font-size: 24px;
+}

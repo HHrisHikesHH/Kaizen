@@ -2,9 +2,10 @@ import './ClosingScreen.css'
 
 export function ClosingScreen({ variant = 'default' }) {
   const isSaturdayBridge = variant === 'saturday'
+  const isSundayClose = variant === 'sunday'
 
   return (
-    <div className="closing-screen">
+    <div className={`closing-screen ${isSundayClose ? 'closing-screen--sunday' : ''}`}>
       <p className="closing-screen__symbol">ॐ</p>
       {isSaturdayBridge ? (
         <div className="closing-screen__bridge">
@@ -19,6 +20,13 @@ export function ClosingScreen({ variant = 'default' }) {
           <p>Let the conversation find what you couldn&apos;t see alone.</p>
           <p>Return in the evening to close the week</p>
           <p>and let the diya rest on a full seven days.</p>
+        </div>
+      ) : isSundayClose ? (
+        <div className="closing-screen__sunday">
+          <p>Seven days witnessed.</p>
+          <p>One more layer understood.</p>
+          <p>Rest now.</p>
+          <p>The diya will light again tomorrow.</p>
         </div>
       ) : (
         <p className="closing-screen__text">The diya rests. It will burn again tomorrow.</p>
