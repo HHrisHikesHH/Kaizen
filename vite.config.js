@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ command }) => ({
   plugins: [react()],
-  base: command === 'build' ? '/kaizen/' : '/',
+  base: command === 'build' ? '/Kaizen/' : '/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
