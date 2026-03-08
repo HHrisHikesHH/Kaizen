@@ -8,7 +8,6 @@ import './AppShell.css'
 const ROUTE_GLOW = {
   '/': 0.08,
   '/habits': 0.05,
-  '/journal': 0.05,
   '/plan': 0.03,
   '/sunday': 0.05,
   '/growth': 0.03,
@@ -18,7 +17,6 @@ const ROUTE_GLOW = {
 const navItems = [
   { path: '/', label: 'Home', icon: 'home' },
   { path: '/habits', label: 'Habits', icon: 'habits' },
-  { path: '/journal', label: 'Journal', icon: 'journal' },
   { path: '/plan', label: 'Plan', icon: 'plan', showDot: true },
   { path: '/sunday', label: 'Sunday', icon: 'sunday' },
   { path: '/growth', label: 'Growth', icon: 'growth' },

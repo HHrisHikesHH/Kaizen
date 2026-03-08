@@ -10,7 +10,6 @@ import { DiyaEntry } from './components/DiyaEntry'
 import { AppShell } from './components/AppShell'
 import { HomePage } from './pages/HomePage'
 import { HabitsPage } from './pages/HabitsPage'
-import { JournalPage } from './pages/JournalPage'
 import { PlanPage } from './pages/PlanPage'
 import { SundayPage } from './pages/SundayPage'
 import { GrowthPage } from './pages/GrowthPage'
@@ -89,7 +88,6 @@ function App() {
           <Route path="/" element={<AppShell />}>
             <Route index element={<HomePage />} />
           <Route path="habits" element={<HabitsPage />} />
-          <Route path="journal" element={<JournalPage />} />
           <Route path="plan" element={<PlanPage />} />
           <Route path="sunday" element={<SundayPage />} />
           <Route path="growth" element={<GrowthPage />} />
