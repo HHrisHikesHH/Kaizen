@@ -1,12 +1,55 @@
-.home-page__title {
-  font-family: var(--font-heading);
-  font-size: 1.75rem;
-  font-weight: 500;
-  color: var(--color-light);
-  margin-bottom: 0.5rem;
+.home-page {
+  position: relative;
+  min-height: 100%;
+  padding: 2rem 1.5rem 3rem;
 }
 
-.home-page__text {
+.home-page--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+}
+
+.home-page__loader {
   font-family: var(--font-body);
-  color: var(--color-parchment);
+  color: var(--color-ash);
+}
+
+/* Ambient diya glow — top-center, flame at 3% */
+.home-page__glow {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120vw;
+  height: 60vh;
+  max-height: 400px;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 0%,
+    rgba(196, 98, 45, 0.03) 0%,
+    transparent 60%
+  );
+  transition: opacity 1.5s ease;
+  z-index: 0;
+}
+
+.home-page__glow--dim {
+  opacity: 0;
+}
+
+.home-page__content {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.home-page--fading .home-page__content {
+  transition: opacity 1.5s ease;
+}
+
+.home-page--fading .home-page__content {
+  opacity: 0.6;
 }

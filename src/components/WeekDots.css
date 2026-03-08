@@ -1,0 +1,39 @@
+.week-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.week-dots__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.week-dots__dot--future {
+  background-color: var(--color-stone);
+}
+
+.week-dots__dot--today-incomplete {
+  background-color: var(--color-ember);
+  animation: week-dot-pulse 2s ease-in-out infinite;
+}
+
+.week-dots__dot--today-complete {
+  background-color: var(--color-gold);
+}
+
+.week-dots__dot--past-complete {
+  background-color: var(--color-flame);
+}
+
+.week-dots__dot--past-missed {
+  background-color: var(--color-stone);
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes week-dot-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}

@@ -1,0 +1,36 @@
+.date-quote-diya {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.date-quote-diya__date {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  color: var(--color-ash);
+  margin-bottom: 0.5rem;
+}
+
+.date-quote-diya__quote {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--color-ash);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.date-quote-diya__flame {
+  color: var(--color-ash);
+  display: inline-flex;
+  animation: diya-pulse 2.5s ease-in-out infinite;
+}
+
+.date-quote-diya__flame--complete {
+  color: var(--color-gold);
+  animation: none;
+}
+
+@keyframes diya-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}

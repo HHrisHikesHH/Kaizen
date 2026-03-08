@@ -1,0 +1,11 @@
+.habit-cards {
+  margin-bottom: 2.5rem;
+}
+
+.habit-cards__heading {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--color-light);
+  margin-bottom: 1.5rem;
+}

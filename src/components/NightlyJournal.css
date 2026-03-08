@@ -1,0 +1,50 @@
+.nightly-journal {
+  margin-bottom: 2.5rem;
+}
+
+.nightly-journal__heading {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--color-light);
+  margin-bottom: 1rem;
+}
+
+.nightly-journal__prompt {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-style: italic;
+  color: var(--color-glow);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.nightly-journal__textarea {
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+  display: block;
+  min-height: 200px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.9;
+  color: var(--color-parchment);
+  resize: none;
+  outline: none;
+}
+
+.nightly-journal__textarea::placeholder {
+  color: var(--color-stone);
+  font-style: italic;
+}
+
+.nightly-journal__wordcount {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--color-ash);
+  margin-top: 0.5rem;
+}

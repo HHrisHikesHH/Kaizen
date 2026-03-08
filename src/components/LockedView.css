@@ -1,0 +1,35 @@
+.locked-view {
+  text-align: center;
+  padding: 3rem 1rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.locked-view__date {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--color-ash);
+  margin-bottom: 1rem;
+}
+
+.locked-view__word {
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--color-glow);
+  margin-bottom: 1.5rem;
+}
+
+.locked-view__status {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--color-parchment);
+  margin-bottom: 2rem;
+}
+
+.locked-view__hint {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--color-ash);
+}

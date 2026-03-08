@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useIsMobile } from './hooks/useIsMobile'
 import { useMemoryFolder } from './hooks/useMemoryFolder'
 import { useDiyaEntry } from './hooks/useDiyaEntry'
+import { MemoryProvider } from './context/MemoryContext'
 import { MobileWall } from './components/MobileWall'
 import { Onboarding } from './components/Onboarding'
 import { DiyaEntry } from './components/DiyaEntry'
@@ -13,14 +15,26 @@ import { PlanPage } from './pages/PlanPage'
 import { SundayPage } from './pages/SundayPage'
 import { GrowthPage } from './pages/GrowthPage'
 
+const MOBILE_OVERRIDE_KEY = 'kaizen_allow_mobile'
+
 function App() {
+  const [mobileOverride, setMobileOverride] = useState(() =>
+    typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(MOBILE_OVERRIDE_KEY) : null
+  )
   const isMobile = useIsMobile()
   const { folderHandle, setFolderHandle, loading } = useMemoryFolder()
   const hasFolder = !!folderHandle
   const { showDiya, finishDiya, checked } = useDiyaEntry(hasFolder && !loading)
 
-  if (isMobile) {
-    return <MobileWall />
+  const handleMobileContinue = () => {
+    try {
+      sessionStorage.setItem(MOBILE_OVERRIDE_KEY, '1')
+    } catch (_) {}
+    setMobileOverride('1')
+  }
+
+  if (isMobile && !mobileOverride) {
+    return <MobileWall onContinue={handleMobileContinue} />
   }
 
   if (loading) {
@@ -64,16 +78,18 @@ function App() {
 
   return (
     <BrowserRouter basename="/kaizen">
-      <Routes>
-        <Route path="/" element={<AppShell />}>
-          <Route index element={<HomePage />} />
+      <MemoryProvider folderHandle={folderHandle} setFolderHandle={setFolderHandle}>
+        <Routes>
+          <Route path="/" element={<AppShell />}>
+            <Route index element={<HomePage />} />
           <Route path="habits" element={<HabitsPage />} />
           <Route path="journal" element={<JournalPage />} />
           <Route path="plan" element={<PlanPage />} />
           <Route path="sunday" element={<SundayPage />} />
           <Route path="growth" element={<GrowthPage />} />
-        </Route>
-      </Routes>
+          </Route>
+        </Routes>
+      </MemoryProvider>
     </BrowserRouter>
   )
 }

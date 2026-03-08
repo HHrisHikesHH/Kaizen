@@ -1,0 +1,35 @@
+.closing-screen {
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-void);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: closing-fade-in 1s ease-out;
+}
+
+.closing-screen__symbol {
+  font-size: 4rem;
+  color: var(--color-gold);
+  margin-bottom: 1rem;
+  animation: closing-glow 2s ease-in-out infinite;
+}
+
+.closing-screen__text {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--color-ash);
+}
+
+@keyframes closing-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes closing-glow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
