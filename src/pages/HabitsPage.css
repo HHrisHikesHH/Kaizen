@@ -52,15 +52,70 @@
   margin-bottom: 0.25rem;
 }
 
-.habits-page__date {
+.habits-page__subtitle {
   font-family: var(--font-body);
   font-size: 0.95rem;
   color: var(--color-ash);
 }
 
-.habits-page__hint {
+.habits-page__empty {
   font-family: var(--font-body);
-  font-size: 0.9rem;
   color: var(--color-ash);
-  margin-top: 2rem;
+  font-size: 0.95rem;
+}
+
+/* Retrospective habit rows */
+.habit-retro {
+  margin-top: 1.5rem;
+}
+
+.habit-retro__row {
+  margin-bottom: 1.25rem;
+}
+
+.habit-retro__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.habit-retro__symbol {
+  font-size: 1rem;
+}
+
+.habit-retro__name {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--color-parchment);
+}
+
+.habit-retro__count {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-ash);
+}
+
+.habit-retro__dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.habit-retro__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--color-stone);
+  flex-shrink: 0;
+}
+
+.habit-retro__dot--on {
+  background: var(--color-ember);
+}
+
+.habit-retro__dot--today {
+  outline: 1px solid var(--color-glow);
+  outline-offset: 1px;
 }

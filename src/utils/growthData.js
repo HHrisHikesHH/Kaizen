@@ -90,6 +90,35 @@ export async function getPresenceMapData(folderHandle) {
   return results
 }
 
+const HABIT_KEYS = ['eating', 'movement', 'reading', 'meditation', 'journaling']
+
+/**
+ * Habit history: one entry per day from earliest to today.
+ * Each: { dateStr, habits: { eating: bool, movement: bool, ... } }
+ */
+export async function getHabitHistory(folderHandle) {
+  const { earliest } = await getPracticeDateRange(folderHandle)
+  const today = toDateString(new Date())
+  if (!earliest) return []
+  const dates = dateRange(earliest, today)
+  const BATCH = 40
+  const results = []
+  for (let i = 0; i < dates.length; i += BATCH) {
+    const chunk = dates.slice(i, i + BATCH)
+    const entries = await Promise.all(chunk.map((d) => readDailyEntry(folderHandle, d)))
+    chunk.forEach((dateStr, j) => {
+      const habits = entries[j]?.habits ?? {}
+      results.push({
+        dateStr,
+        habits: Object.fromEntries(
+          HABIT_KEYS.map((k) => [k, !!habits[k]?.logged])
+        ),
+      })
+    })
+  }
+  return results
+}
+
 /**
  * Journal word count data for awareness arc: [{ dateStr, wordCount }] for days with wordCount > 0.
  */
