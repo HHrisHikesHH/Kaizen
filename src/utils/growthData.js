@@ -94,7 +94,7 @@ const HABIT_KEYS = ['eating', 'movement', 'reading', 'meditation', 'journaling']
 
 /**
  * Habit history: one entry per day from earliest to today.
- * Each: { dateStr, habits: { eating: bool, movement: bool, ... } }
+ * Each: { dateStr, habits: { ... }, journal: { prompt, entry, wordCount } }
  */
 export async function getHabitHistory(folderHandle) {
   const { earliest } = await getPracticeDateRange(folderHandle)
@@ -107,12 +107,19 @@ export async function getHabitHistory(folderHandle) {
     const chunk = dates.slice(i, i + BATCH)
     const entries = await Promise.all(chunk.map((d) => readDailyEntry(folderHandle, d)))
     chunk.forEach((dateStr, j) => {
-      const habits = entries[j]?.habits ?? {}
+      const e = entries[j]
+      const habits = e?.habits ?? {}
+      const journal = e?.journal ?? {}
       results.push({
         dateStr,
         habits: Object.fromEntries(
           HABIT_KEYS.map((k) => [k, !!habits[k]?.logged])
         ),
+        journal: {
+          prompt: journal.prompt ?? '',
+          entry: journal.entry ?? '',
+          wordCount: journal.wordCount ?? 0,
+        },
       })
     })
   }

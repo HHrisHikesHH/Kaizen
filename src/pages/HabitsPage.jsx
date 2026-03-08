@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useMemory } from '../context/MemoryContext'
 import { getHabitHistory } from '../utils/growthData'
 import { toDateString } from '../utils/dateHelpers'
+import { formatDateDisplay } from '../utils/dailyEntry'
 import './HabitsPage.css'
 
 const HABIT_KEYS = ['eating', 'movement', 'reading', 'meditation', 'journaling']
@@ -44,6 +45,9 @@ export function HabitsPage() {
 
   const today = toDateString(new Date())
   const recent = history.slice(-RETRO_DAYS)
+  const journalDays = [...recent]
+    .reverse()
+    .filter((d) => (d.journal?.entry ?? '').trim().length > 0)
 
   if (loading) {
     return (
@@ -86,19 +90,85 @@ export function HabitsPage() {
                     </span>
                   </div>
                   <div className="habit-retro__dots" aria-hidden>
-                    {recent.map((day) => (
-                      <span
-                        key={day.dateStr}
-                        className={`habit-retro__dot ${
-                          day.habits[key] ? 'habit-retro__dot--on' : ''
-                        } ${day.dateStr === today ? 'habit-retro__dot--today' : ''}`}
-                        title={day.dateStr}
-                      />
-                    ))}
+                    {recent.map((day) => {
+                      const hasJournal = (day.journal?.entry ?? '').trim().length > 0
+                      const dotClass = `habit-retro__dot ${
+                        day.habits[key] ? 'habit-retro__dot--on' : ''
+                      } ${day.dateStr === today ? 'habit-retro__dot--today' : ''} ${
+                        hasJournal ? 'habit-retro__dot--has-journal' : ''
+                      }`
+                      return hasJournal ? (
+                        <a
+                          key={day.dateStr}
+                          href={`#journal-${day.dateStr}`}
+                          className={dotClass}
+                          title={`${day.dateStr} — go to journal`}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            document.getElementById(`journal-${day.dateStr}`)?.scrollIntoView({ behavior: 'smooth' })
+                          }}
+                        />
+                      ) : (
+                        <span
+                          key={day.dateStr}
+                          className={dotClass}
+                          title={day.dateStr}
+                        />
+                      )
+                    })}
                   </div>
                 </div>
               )
             })}
+          </section>
+        )}
+
+        {recent.length > 0 && (
+          <section className="habit-retro__journal-section">
+            <h2 className="habit-retro__journal-heading">Journal in retrospect</h2>
+            {journalDays.length === 0 ? (
+              <p className="habits-page__empty">
+                No journal entries in the last {RETRO_DAYS} days.
+              </p>
+            ) : (
+              <ul className="journal-retro-list">
+                {journalDays.map((day) => (
+                  <li
+                    key={day.dateStr}
+                    id={`journal-${day.dateStr}`}
+                    className="journal-retro-item"
+                  >
+                    <div className="journal-retro-item__head">
+                      <a
+                        href={`#journal-${day.dateStr}`}
+                        className="journal-retro-item__date-link"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          document.getElementById(`journal-${day.dateStr}`)?.scrollIntoView({ behavior: 'smooth' })
+                        }}
+                      >
+                        <time dateTime={day.dateStr}>
+                          {formatDateDisplay(day.dateStr)}
+                        </time>
+                      </a>
+                      {day.journal?.wordCount > 0 && (
+                        <span className="journal-retro-item__words">
+                          {day.journal.wordCount} words
+                        </span>
+                      )}
+                    </div>
+                    {day.journal?.prompt && (
+                      <p className="journal-retro-item__prompt">
+                        {day.journal.prompt}
+                      </p>
+                    )}
+                    <p className="journal-retro-item__entry">
+                      {day.journal?.entry}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         )}
       </div>
