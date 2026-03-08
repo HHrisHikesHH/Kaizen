@@ -6,8 +6,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 50;
-  animation: closing-fade-in 1s ease-out;
+  z-index: 9999;
+  animation: closing-fade-in 0.5s ease-out forwards;
 }
 
 .closing-screen__symbol {
