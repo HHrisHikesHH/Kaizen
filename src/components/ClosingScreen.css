@@ -11,10 +11,13 @@
 }
 
 .closing-screen__symbol {
-  font-size: 4rem;
   color: var(--color-gold);
   margin-bottom: 1rem;
-  animation: closing-glow 2s ease-in-out infinite;
+  animation: wheelTurn 20s linear infinite;
+}
+
+.closing-screen__symbol svg {
+  display: block;
 }
 
 .closing-screen__text {
@@ -59,7 +62,7 @@
   to { opacity: 1; }
 }
 
-@keyframes closing-glow {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
+@keyframes wheelTurn {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }

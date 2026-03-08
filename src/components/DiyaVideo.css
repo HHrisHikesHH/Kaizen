@@ -5,6 +5,7 @@
   height: var(--diya-height, 160px);
   flex-shrink: 0;
   background: transparent;
+  animation: diyaBreathe 6s ease-in-out infinite;
 }
 
 .diya-video--fixed {
@@ -13,6 +14,10 @@
   bottom: 15%;
   z-index: 0;
   pointer-events: none;
+}
+
+.diya-video--tooltip-enabled {
+  pointer-events: auto;
 }
 
 /* Radial mask: destroy rectangular edges. Ellipse, solid center, soft falloff. */
@@ -42,7 +47,11 @@
   opacity: 0;
 }
 
-/* Ambient glow — pseudo ::after, breathes like a real flame */
+.diya-video--extinguishing {
+  animation: none;
+}
+
+/* Ambient glow — pseudo ::after, breathes in sync with the diya */
 .diya-video--glow::after {
   content: '';
   position: absolute;
@@ -59,7 +68,7 @@
   );
   pointer-events: none;
   z-index: -1;
-  animation: diya-breathe 3s ease-in-out infinite;
+  animation: glowBreathe 6s ease-in-out infinite;
   transition: opacity 2000ms ease-in;
 }
 
@@ -68,21 +77,83 @@
   opacity: 0;
 }
 
-@keyframes diya-breathe {
-  0%, 100% {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.08);
-  }
+@keyframes diyaBreathe {
+  0%   { transform: translateY(0px) scale(1);     opacity: 0.92; }
+  50%  { transform: translateY(-4px) scale(1.012); opacity: 1;    }
+  100% { transform: translateY(0px) scale(1);     opacity: 0.92; }
+}
+
+@keyframes glowBreathe {
+  0%   { opacity: 0.5; transform: translate(-50%, -50%) scale(1);    }
+  50%  { opacity: 0.8; transform: translate(-50%, -50%) scale(1.06); }
+  100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1);    }
 }
 
 .diya-video--extinguishing {
   transition: opacity 2000ms ease-in;
+  opacity: 0;
 }
 
-.diya-video--extinguishing {
-  opacity: 0;
+/* Tooltip: आपो दीप भव — above diya, centered; no tooltip on mobile */
+.diya-video__tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, 0);
+  margin-bottom: 12px;
+  padding: 10px 18px;
+  background: rgba(17, 14, 9, 0.92);
+  border: 1px solid var(--color-stone);
+  border-radius: 6px;
+  box-shadow:
+    0 0 20px rgba(196, 98, 45, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  animation: diya-tooltip-in 400ms ease forwards;
+}
+
+.diya-video__tooltip-main {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--color-glow);
+  letter-spacing: 0.04em;
+}
+
+.diya-video__tooltip-sub {
+  display: block;
+  font-family: 'EB Garamond', serif;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--color-ash);
+  margin-top: 4px;
+}
+
+@keyframes diya-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.diya-video__tooltip--out {
+  animation: diya-tooltip-out 300ms ease forwards;
+}
+
+@keyframes diya-tooltip-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
 }
