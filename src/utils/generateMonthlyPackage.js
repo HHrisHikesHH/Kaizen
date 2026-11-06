@@ -4,17 +4,9 @@
 
 import { getWeekSummary } from './aggregateWeek'
 import { getSessionNotes } from './aiNotesManager'
-import { getWeekDateRange, formatWeekRange } from './dateHelpers'
+import { getWeekDateRange, formatWeekRange, getISOWeek } from './dateHelpers'
 
-function getWeekNumber(date) {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() + 4 - (d.getDay() || 7))
-  const yearStart = new Date(d.getFullYear(), 0, 1)
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
-}
-
-/** Weeks whose Sunday falls in the given calendar month. */
+/** Weeks whose Sunday falls in the given calendar month, as ISO (year, week) pairs. */
 function getWeeksInMonth(year, month) {
   const result = []
   const first = new Date(year, month - 1, 1)
@@ -22,9 +14,8 @@ function getWeeksInMonth(year, month) {
   const d = new Date(first)
   while (d <= last) {
     if (d.getDay() === 0) {
-      const y = d.getFullYear()
-      const weekNum = getWeekNumber(d)
-      result.push({ year: y, weekNumber: weekNum })
+      const { isoYear, isoWeek } = getISOWeek(d)
+      result.push({ year: isoYear, weekNumber: isoWeek })
     }
     d.setDate(d.getDate() + 1)
   }
@@ -175,8 +166,8 @@ export async function generateMonthlyPackage(year, month, folderHandle) {
   lines.push('WEEKLY NOTES SUMMARY (condensed)')
   lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   notes.forEach(({ year: y, weekNumber, notes: n }, i) => {
-    const { start } = getWeekDateRange(y, weekNumber)
-    const range = formatWeekRange(start, new Date(start.getTime() + 5 * 86400000))
+    const { start, end } = getWeekDateRange(y, weekNumber)
+    const range = formatWeekRange(start, end)
     lines.push(`Week ${weekNumber} (${range}):`)
     if (n.patternNoticed) lines.push(`  Pattern noticed: ${n.patternNoticed}`)
     if (n.watchForNextWeek) lines.push(`  Watch for: ${n.watchForNextWeek}`)

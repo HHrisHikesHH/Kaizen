@@ -1,6 +1,8 @@
 /**
- * AI notes: /AI_notes/week-[WW]-[YYYY]-notes.json
+ * AI notes: /AI_notes/week-[WW]-[YYYY]-notes.json  (YYYY = ISO week year)
  */
+
+import { isValidISOWeek, shiftISOWeek } from './dateHelpers'
 
 async function ensurePermission(handle) {
   if (handle.queryPermission && (await handle.queryPermission({ mode: 'readwrite' })) !== 'granted') {
@@ -13,14 +15,14 @@ function fileName(weekNumber, year) {
 }
 
 /**
- * Get last session's notes (previous week). For week 1, returns null.
+ * Get last session's notes (the previous ISO week, which may be week 53 of
+ * the previous year). `year` is the ISO week year.
  */
 export async function getLastSessionNotes(year, weekNumber, folderHandle) {
   if (!folderHandle?.getDirectoryHandle) return null
-  if (weekNumber <= 1) {
-    return getSessionNotes(year - 1, 52, folderHandle)
-  }
-  return getSessionNotes(year, weekNumber - 1, folderHandle)
+  if (!isValidISOWeek(year, weekNumber)) return null
+  const prev = shiftISOWeek({ isoYear: year, isoWeek: weekNumber }, -1)
+  return getSessionNotes(prev.isoYear, prev.isoWeek, folderHandle)
 }
 
 /**

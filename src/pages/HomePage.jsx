@@ -4,7 +4,7 @@ import { useDailyEntry } from '../hooks/useDailyEntry'
 import { useWeekCompletion } from '../hooks/useWeekCompletion'
 import { useMemory } from '../context/MemoryContext'
 import { getTodayDateString } from '../utils/dailyEntry'
-import { getWeekNumber, getDayOfWeek } from '../utils/dateHelpers'
+import { getISOWeek, getDayOfWeek, parseLocalDateKey } from '../utils/dateHelpers'
 import { generateWeekSummary, saveWeekSummary } from '../utils/aggregateWeek'
 import { useWeekPlan } from '../hooks/useWeekPlan'
 import { useLastWeekReflection } from '../hooks/useLastWeekReflection'
@@ -38,9 +38,10 @@ export function HomePage() {
   const weekCompletion = useWeekCompletion(today)
   const diyaSlotRef = useRef(null)
   const now = new Date()
+  const currentWeek = getISOWeek(now)
   const { plan: weekPlan, toggleIntention: toggleWeekIntention } = useWeekPlan(
-    now.getFullYear(),
-    getWeekNumber(now)
+    currentWeek.isoYear,
+    currentWeek.isoWeek
   )
   const todayDayName = getDayOfWeek(now)
   const todayIntentions = (weekPlan?.intentions?.[todayDayName] ?? []).filter(Boolean)
@@ -150,10 +151,8 @@ export function HomePage() {
     updateEntry({ sessionComplete: true, divaExtinguished: true })
     setPhase('fading')
     if (folderHandle && entry?.date) {
-      const d = new Date(entry.date + 'T12:00:00')
-      const year = d.getFullYear()
-      const weekNum = getWeekNumber(d)
-      generateWeekSummary(year, weekNum, folderHandle).then((summary) => {
+      const { isoYear, isoWeek } = getISOWeek(parseLocalDateKey(entry.date))
+      generateWeekSummary(isoYear, isoWeek, folderHandle).then((summary) => {
         if (summary) saveWeekSummary(summary, folderHandle)
       })
     }

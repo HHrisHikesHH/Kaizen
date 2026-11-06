@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useWeekPlan } from '../hooks/useWeekPlan'
-import { getWeekNumber, getDayOfWeek } from '../utils/dateHelpers'
+import { getISOWeek, getDayOfWeek } from '../utils/dateHelpers'
 import { CustomCursor } from './CustomCursor'
 import './AppShell.css'
 
@@ -86,7 +86,8 @@ function NavIcon({ icon }) {
 export function AppShell() {
   const location = useLocation()
   const now = new Date()
-  const { plan: weekPlan } = useWeekPlan(now.getFullYear(), getWeekNumber(now))
+  const currentWeek = getISOWeek(now)
+  const { plan: weekPlan } = useWeekPlan(currentWeek.isoYear, currentWeek.isoWeek)
   const todayDayName = getDayOfWeek(now)
   const todayIntentions = (weekPlan?.intentions?.[todayDayName] ?? []).filter(Boolean)
   const hasIncompleteTodayIntentions = todayIntentions.some((i) => !i.complete)

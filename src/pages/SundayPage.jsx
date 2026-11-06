@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useMemory } from '../context/MemoryContext'
 import { useSundaySession } from '../hooks/useSundaySession'
 import { useDailyEntry } from '../hooks/useDailyEntry'
-import { getWeekNumber, getDayOfWeek } from '../utils/dateHelpers'
+import { getISOWeek, getTodayKey } from '../utils/dateHelpers'
 import { generateSundayPackage } from '../utils/generateSundayPackage'
 import { parseSessionNotes } from '../utils/parseSessionNotes'
 import { saveSessionNotes } from '../utils/aiNotesManager'
@@ -33,8 +33,8 @@ const SUNDAY_CLOSING_FLOW_KEY = 'kaizen-sunday-closing-flow'
 export function SundayPage() {
   const today = new Date()
   const isSunday = today.getDay() === 0
-  const year = today.getFullYear()
-  const weekNumber = getWeekNumber(today)
+  // A Sunday is the last day of its ISO week; use the ISO year (Sunday Jan 3 2027 is 2026-W53).
+  const { isoYear: year, isoWeek: weekNumber } = getISOWeek(today)
   const daysUntil = getDaysUntilSunday()
 
   const { folderHandle } = useMemory()
@@ -100,7 +100,7 @@ export function SundayPage() {
     const notesPayload = {
       ...parsed,
       weekNumber: parsed.weekNumber || weekNumber,
-      sessionDate: parsed.sessionDate || today.toISOString().slice(0, 10),
+      sessionDate: parsed.sessionDate || getTodayKey(),
     }
 
     saveSessionNotes(notesPayload, year, weekNumber, folderHandle).then(() => {

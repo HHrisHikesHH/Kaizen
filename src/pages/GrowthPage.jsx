@@ -373,7 +373,8 @@ function PresenceMap({ data, todayStr, onTooltip }) {
   const byMonth = {}
   data.forEach((d) => {
     const date = new Date(d.dateStr + 'T12:00:00')
-    const monthKey = `${date.getFullYear()}-${date.getMonth()}`
+    // Zero-padded so keys sort chronologically ("2026-09" before "2026-10").
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`
     if (!byMonth[monthKey]) byMonth[monthKey] = []
     byMonth[monthKey].push(d)
   })
