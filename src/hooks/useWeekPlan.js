@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useMemory } from '../context/MemoryContext'
-import { readWeekPlan, writeWeekPlan, defaultWeekPlan } from '../utils/weekPlanStore'
+import { writeWeekPlan, defaultWeekPlan } from '../utils/weekPlanStore'
+import { resolveWeekRecords } from '../utils/weekFileCompat'
 import { getWeekDateRange, formatWeekRange } from '../utils/dateHelpers'
 import { generateWeekSummary, saveWeekSummary } from '../utils/aggregateWeek'
 
@@ -9,13 +10,18 @@ function uuid() {
 }
 
 /**
- * Load and persist week plan for a given year/week.
- * Auto-saves on every change.
+ * Load and persist the plan for an ISO week. Auto-saves on every change.
+ *
+ * `plan` is always the canonical record (/ISO-year/week-N.json). Plans saved
+ * by older versions under a neighbouring year are returned separately in
+ * `compat.legacy` (read-only), never merged into `plan`. When saving could
+ * destroy another record (`compat.writable === false`), changes are ignored.
  */
 export function useWeekPlan(year, weekNumber) {
   const { folderHandle } = useMemory()
   const [plan, setPlan] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [compat, setCompat] = useState(null)
 
   const { start, end } = getWeekDateRange(year, weekNumber)
   const dateRange = `${formatWeekRange(start, end)}, ${year}`
@@ -24,21 +30,34 @@ export function useWeekPlan(year, weekNumber) {
     let cancelled = false
     if (!folderHandle) {
       setPlan(null)
+      setCompat(null)
       setLoading(false)
       return
     }
     setLoading(true)
-    readWeekPlan(folderHandle, year, weekNumber)
-      .then((data) => {
+    setCompat(null) // no saves until this week's records are known
+    Promise.all([
+      resolveWeekRecords(folderHandle, 'plan', year, weekNumber),
+      resolveWeekRecords(folderHandle, 'summary', year, weekNumber),
+    ])
+      .then(([planRecords, summaryRecords]) => {
         if (cancelled) return
-        if (data) {
-          setPlan(data)
-        } else {
-          setPlan(defaultWeekPlan(year, weekNumber, dateRange))
-        }
+        const { canonical } = planRecords
+        setPlan(canonical.state === 'ok' && canonical.data ? canonical.data : defaultWeekPlan(year, weekNumber, dateRange))
+        setCompat({
+          status: planRecords.status,
+          writable: planRecords.writable,
+          canonicalUnreadable: canonical.state === 'unreadable',
+          sharedWith: planRecords.sharedWith,
+          legacy: planRecords.legacy,
+          legacySummaries: summaryRecords.legacy,
+        })
       })
       .catch(() => {
-        if (!cancelled) setPlan(defaultWeekPlan(year, weekNumber, dateRange))
+        if (cancelled) return
+        // Unknown state: show an empty plan but never save over whatever is stored.
+        setPlan(defaultWeekPlan(year, weekNumber, dateRange))
+        setCompat({ status: 'unknown', writable: false, canonicalUnreadable: true, sharedWith: [], legacy: [], legacySummaries: [] })
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -48,14 +67,16 @@ export function useWeekPlan(year, weekNumber) {
 
   const persist = useCallback(
     (next) => {
-      if (!folderHandle || !next) return
-      writeWeekPlan(folderHandle, next)
+      if (!folderHandle || !next || !compat?.writable) return
       setPlan(next)
-      generateWeekSummary(year, weekNumber, folderHandle).then((summary) => {
-        if (summary) saveWeekSummary(summary, folderHandle)
+      writeWeekPlan(folderHandle, next).then((written) => {
+        if (!written) return
+        generateWeekSummary(year, weekNumber, folderHandle).then((summary) => {
+          if (summary) saveWeekSummary(summary, folderHandle)
+        })
       })
     },
-    [folderHandle, year, weekNumber]
+    [folderHandle, year, weekNumber, compat]
   )
 
   const addIntention = useCallback(
@@ -116,5 +137,6 @@ export function useWeekPlan(year, weekNumber) {
     toggleIntention,
     deleteIntention,
     dateRange,
+    compat,
   }
 }

@@ -5,6 +5,7 @@
 
 import { readDailyEntry } from './dailyEntry'
 import { readWeekPlan } from './weekPlanStore'
+import { canWriteWeekFile } from './weekFileCompat'
 import {
   getDatesForWeek,
   getWeekDateRange,
@@ -154,12 +155,18 @@ async function ensurePermission(handle) {
 }
 
 /**
- * Save week summary to /YYYY/week-[WW]-summary.json
+ * Save week summary to /YYYY/week-[WW]-summary.json (YYYY = ISO year).
+ * Returns true if written. Refuses to overwrite a file that is also another
+ * week's legacy record, or one that exists but can't be read.
  */
 export async function saveWeekSummary(summary, folderHandle) {
-  if (!folderHandle || typeof folderHandle.getDirectoryHandle !== 'function') return
+  if (!folderHandle || typeof folderHandle.getDirectoryHandle !== 'function') return false
   try {
     await ensurePermission(folderHandle)
+    if (!(await canWriteWeekFile(folderHandle, 'summary', summary.year, summary.weekNumber))) {
+      console.error(`Week summary ${summary.year}/${SUMMARY_FILENAME(summary.weekNumber)} not overwritten: it may hold another week's record or could not be read.`)
+      return false
+    }
     const yearDir = await folderHandle.getDirectoryHandle(String(summary.year), { create: true })
     const fileHandle = await yearDir.getFileHandle(SUMMARY_FILENAME(summary.weekNumber), {
       create: true,
@@ -167,13 +174,18 @@ export async function saveWeekSummary(summary, folderHandle) {
     const writable = await fileHandle.createWritable()
     await writable.write(JSON.stringify(summary, null, 2))
     await writable.close()
+    return true
   } catch (err) {
     console.error('Failed to save week summary:', err)
+    return false
   }
 }
 
 /**
- * Read week summary. Returns null if file does not exist.
+ * Read the canonical week summary. Returns null if it does not exist.
+ * A legacy summary is never substituted: its day data was computed for the
+ * week its path names, not this one. Use resolveWeekRecords(…, 'summary', …)
+ * to list legacy summaries.
  */
 export async function getWeekSummary(year, weekNumber, folderHandle) {
   if (!folderHandle || typeof folderHandle.getDirectoryHandle !== 'function') return null

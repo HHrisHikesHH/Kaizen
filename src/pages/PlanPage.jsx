@@ -12,6 +12,7 @@ import {
   isToday,
 } from '../utils/dateHelpers'
 import { SUGGESTED_INTENTIONS } from '../utils/suggestedIntentions'
+import { LegacyWeekRecords } from '../components/LegacyWeekRecords'
 import './PlanPage.css'
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -30,13 +31,15 @@ export function PlanPage() {
   const [deletingId, setDeletingId] = useState(null)
 
   const { folderHandle } = useMemory()
-  const { plan, loading, addIntention, toggleIntention, deleteIntention, dateRange } = useWeekPlan(
+  const { plan, loading, addIntention, toggleIntention, deleteIntention, dateRange, compat } = useWeekPlan(
     viewYear,
     viewWeek
   )
   const completions = useWeekDayCompletions(viewYear, viewWeek)
 
   const isViewingPastWeek = compareISOWeeks(view, currentWeek) < 0
+  // Editing is off for past weeks, and whenever saving could overwrite another record.
+  const readOnly = isViewingPastWeek || compat?.writable === false
 
   const dates = getDatesForWeek(viewYear, viewWeek)
   const weekDatesWithSunday = [...dates, addLocalDays(dates[5], 1)]
@@ -145,13 +148,13 @@ export function PlanPage() {
                         type="button"
                         className="plan-page__intention-text"
                         onClick={() =>
-                          !isViewingPastWeek && toggleIntention(dayName, item.id)
+                          !readOnly && toggleIntention(dayName, item.id)
                         }
-                        disabled={isViewingPastWeek}
+                        disabled={readOnly}
                       >
                         {item.text}
                       </button>
-                      {!isViewingPastWeek && (
+                      {!readOnly && (
                         <button
                           type="button"
                           className="plan-page__intention-delete"
@@ -197,7 +200,7 @@ export function PlanPage() {
                       />
                     </div>
                   ) : (
-                    !isViewingPastWeek && (
+                    !readOnly && (
                       <button
                         type="button"
                         className="plan-page__add-btn"
@@ -212,6 +215,8 @@ export function PlanPage() {
             )
           })}
         </div>
+
+        <LegacyWeekRecords compat={compat} dayNames={DAY_NAMES} />
 
         <section className="plan-page__suggestions">
           <p className="plan-page__suggestions-label">intentions worth considering</p>
