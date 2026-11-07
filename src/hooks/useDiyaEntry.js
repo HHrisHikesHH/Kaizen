@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react'
+import { getTodayKey } from '../utils/dateHelpers'
 
 const LAST_OPENED_KEY = 'kaizen_lastOpenedDate'
-
-function todayString() {
-  return new Date().toISOString().slice(0, 10)
-}
 
 export function useDiyaEntry(shouldRun) {
   const [showDiya, setShowDiya] = useState(false)
@@ -16,7 +13,7 @@ export function useDiyaEntry(shouldRun) {
       return
     }
     const last = localStorage.getItem(LAST_OPENED_KEY)
-    const today = todayString()
+    const today = getTodayKey()
     if (last !== today) {
       setShowDiya(true)
     }
@@ -24,7 +21,7 @@ export function useDiyaEntry(shouldRun) {
   }, [shouldRun])
 
   const finishDiya = () => {
-    localStorage.setItem(LAST_OPENED_KEY, todayString())
+    localStorage.setItem(LAST_OPENED_KEY, getTodayKey())
     setShowDiya(false)
   }
 

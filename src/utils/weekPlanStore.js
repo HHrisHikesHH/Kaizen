@@ -1,6 +1,10 @@
 /**
- * Weekly plan file: /YYYY/week-[WW].json
+ * Weekly plan file: /YYYY/week-[WW].json (YYYY = ISO year).
+ * Files saved by older versions under a neighbouring year are read through
+ * resolveWeekRecords() in weekFileCompat.js and are never written here.
  */
+
+import { canWriteWeekFile } from './weekFileCompat'
 
 async function ensurePermission(handle) {
   if (handle.queryPermission && (await handle.queryPermission({ mode: 'readwrite' })) !== 'granted') {
@@ -39,20 +43,28 @@ export async function readWeekPlan(handle, year, weekNumber) {
 }
 
 /**
- * Write week plan. Creates YYYY/ if needed.
+ * Write week plan. Creates YYYY/ if needed. Returns true if written.
+ * Refuses to overwrite a file that is also another week's legacy record,
+ * or one that exists but can't be read.
  */
 export async function writeWeekPlan(handle, data) {
-  if (!handle || typeof handle.getDirectoryHandle !== 'function') return
+  if (!handle || typeof handle.getDirectoryHandle !== 'function') return false
   try {
     await ensurePermission(handle)
+    if (!(await canWriteWeekFile(handle, 'plan', data.year, data.weekNumber))) {
+      console.error(`Week plan ${data.year}/week-${data.weekNumber}.json not overwritten: it may hold another week's record or could not be read.`)
+      return false
+    }
     const payload = { ...data, lastModified: new Date().toISOString() }
     const yearDir = await handle.getDirectoryHandle(String(data.year), { create: true })
     const fileHandle = await yearDir.getFileHandle(`week-${data.weekNumber}.json`, { create: true })
     const writable = await fileHandle.createWritable()
     await writable.write(JSON.stringify(payload, null, 2))
     await writable.close()
+    return true
   } catch (err) {
     console.error('Failed to write week plan:', err)
+    return false
   }
 }
 

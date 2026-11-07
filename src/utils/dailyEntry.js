@@ -1,39 +1,33 @@
 /**
  * Daily entry file path: /YYYY/MM/YYYY-MM-DD.json
+ *
+ * The date key is the user's local calendar date (see dateHelpers.js).
  */
 
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
-function getOrdinal(n) {
-  const s = ['th', 'st', 'nd', 'rd']
-  const v = n % 100
-  return n + (s[(v - 20) % 10] || s[v] || s[0])
-}
+import { JOURNAL_PROMPTS } from './prompts'
+import {
+  formatDateForDisplay,
+  getDayOfWeek,
+  getLocalDayOfYear,
+  getTodayKey,
+  parseLocalDateKey,
+} from './dateHelpers'
 
 export function formatDateDisplay(dateStr) {
-  const d = new Date(dateStr + 'T12:00:00')
-  const day = d.getDate()
-  const month = d.toLocaleDateString('en-GB', { month: 'long' })
-  const dayName = DAY_NAMES[d.getDay()]
-  return `${dayName}, the ${getOrdinal(day)} of ${month}`
+  return formatDateForDisplay(dateStr)
 }
 
 export function getDayOfYear(dateStr) {
-  const d = new Date(dateStr + 'T12:00:00')
-  const start = new Date(d.getFullYear(), 0, 0)
-  const diff = d - start
-  return Math.floor(diff / (1000 * 60 * 60 * 24))
+  return getLocalDayOfYear(dateStr)
 }
 
+/** Today's local date key. Kept as the name existing callers use. */
 export function getTodayDateString() {
-  return new Date().toISOString().slice(0, 10)
+  return getTodayKey()
 }
-
-import { JOURNAL_PROMPTS } from './prompts'
 
 export function defaultEntry(dateStr) {
-  const d = new Date(dateStr + 'T12:00:00')
-  const dayOfWeek = DAY_NAMES[d.getDay()]
+  const dayOfWeek = getDayOfWeek(parseLocalDateKey(dateStr))
   const dayOfYear = getDayOfYear(dateStr)
   const prompt = JOURNAL_PROMPTS[dayOfYear % JOURNAL_PROMPTS.length]
   return {

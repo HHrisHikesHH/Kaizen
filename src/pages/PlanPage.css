@@ -257,6 +257,66 @@
   color: var(--color-ash);
 }
 
+/* Records saved by an earlier version under another year's folder (read-only) */
+.plan-page__legacy {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-stone);
+}
+
+.plan-page__legacy-note {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--color-ash);
+  margin: 0 0 0.75rem 0;
+}
+
+.plan-page__legacy-record {
+  margin-bottom: 1.25rem;
+}
+
+.plan-page__legacy-path {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--color-ash);
+  margin: 0 0 0.5rem 0;
+  overflow-wrap: anywhere;
+}
+
+.plan-page__legacy-day {
+  margin-bottom: 0.5rem;
+}
+
+.plan-page__legacy-day-name {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ash);
+}
+
+.plan-page__legacy-list {
+  list-style: none;
+  margin: 0.25rem 0 0 0;
+  padding: 0;
+}
+
+.plan-page__legacy-item {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-parchment);
+  border-left: 1px solid var(--color-stone);
+  padding: 0.2rem 0 0.2rem 10px;
+}
+
+.plan-page__legacy-item--done {
+  color: var(--color-ash);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-stone);
+}
+
 .plan-page__suggestions {
   margin-top: 3rem;
   text-align: center;

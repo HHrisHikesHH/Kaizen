@@ -4,7 +4,7 @@
  */
 
 import { readSundayState } from './sundayStore'
-import { getWeekDateRange } from './dateHelpers'
+import { getISOWeek } from './dateHelpers'
 
 async function ensurePermission(handle) {
   if (handle?.queryPermission && (await handle.queryPermission({ mode: 'readwrite' })) !== 'granted') {
@@ -12,7 +12,7 @@ async function ensurePermission(handle) {
   }
 }
 
-/** Get (year, weekNumber) for every week whose Sunday falls in the given calendar month. */
+/** Get ISO (year, weekNumber) for every week whose Sunday falls in the given calendar month. */
 function getWeeksInMonth(year, month) {
   const result = []
   const first = new Date(year, month - 1, 1)
@@ -20,23 +20,12 @@ function getWeeksInMonth(year, month) {
   const d = new Date(first)
   while (d <= last) {
     if (d.getDay() === 0) {
-      const y = d.getFullYear()
-      const weekEnd = new Date(d)
-      weekEnd.setDate(weekEnd.getDate() - 1)
-      const weekNum = getWeekNumber(weekEnd)
-      result.push({ year: y, weekNumber: weekNum })
+      const { isoYear, isoWeek } = getISOWeek(d)
+      result.push({ year: isoYear, weekNumber: isoWeek })
     }
     d.setDate(d.getDate() + 1)
   }
   return result
-}
-
-function getWeekNumber(date) {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() + 4 - (d.getDay() || 7))
-  const yearStart = new Date(d.getFullYear(), 0, 1)
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
 }
 
 /** List all AI_notes filenames matching a pattern. */
