@@ -20,7 +20,7 @@ export function Onboarding({ onComplete, setFolderHandle }) {
         const result = await connectChosenFolder(handle)
         if (!result.ok) {
           console.error(result.error)
-          setConnectError(describeConnectError(result.error))
+          setConnectError(describeConnectError(result.error, result.stage))
           return
         }
         setChosenHandle(handle)

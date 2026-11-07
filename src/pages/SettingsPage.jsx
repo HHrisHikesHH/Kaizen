@@ -58,7 +58,7 @@ export function SettingsPage() {
       setShowNewFolderWarning(true)
     } else {
       console.error(result.error)
-      setReconnectMessage(describeConnectError(result.error))
+      setReconnectMessage(describeConnectError(result.error, result.stage))
     }
   }
 
@@ -71,11 +71,15 @@ export function SettingsPage() {
     const result = await connectChosenFolder(handle)
     if (!result.ok) {
       console.error(result.error)
-      setReconnectMessage(describeConnectError(result.error))
+      setReconnectMessage(describeConnectError(result.error, result.stage))
       return
     }
     setFolderHandle(handle)
-    setReconnectMessage('Memory reconnected. Welcome back.')
+    setReconnectMessage(
+      result.memory === 'created'
+        ? 'A new memory has begun in this folder.'
+        : 'This folder already held a memory, so Kaizen kept it as it was. Memory reconnected. Welcome back.'
+    )
   }
 
   const handleCancelNewFolder = () => {

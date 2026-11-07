@@ -235,7 +235,7 @@ describe('connectChosenFolder (onboarding: createIfMissing defaults to true)', (
     const handle = failingHandle(boom)
     const saveHandle = vi.fn(async () => {})
 
-    expect(await connectChosenFolder(handle, { saveHandle })).toEqual({ ok: false, reason: 'error', error: boom })
+    expect(await connectChosenFolder(handle, { saveHandle })).toEqual({ ok: false, reason: 'error', stage: 'check', error: boom })
     expect(saveHandle).not.toHaveBeenCalled()
     expect(handle.getFileHandle).toHaveBeenCalledTimes(1)
   })
@@ -258,7 +258,7 @@ describe('connectChosenFolder (onboarding: createIfMissing defaults to true)', (
 
     const result = await connectChosenFolder(fs.root, { saveHandle: async () => { throw idbError } })
 
-    expect(result).toEqual({ ok: false, reason: 'error', error: idbError })
+    expect(result).toEqual({ ok: false, reason: 'error', stage: 'remember', error: idbError })
     expect(fs.read(MEMORY_FILE_NAME)).toBe(EXISTING_MEMORY)
   })
 })
@@ -339,6 +339,37 @@ describe('describeConnectError', () => {
     for (const m of messages) {
       expect(m).toMatch(/was not connected/)
       expect(m).toMatch(/Nothing already in it was changed/)
+    }
+  })
+})
+
+describe('connectChosenFolder failure stage (for accurate messages)', () => {
+  it('reports stage "check" when the folder could not be checked', async () => {
+    const fs = emptyFolder().setPermission('denied')
+    expect(await connectChosenFolder(fs.root, { saveHandle: async () => {} })).toMatchObject({ ok: false, stage: 'check' })
+  })
+
+  it('reports stage "create" when the new memory could not be written', async () => {
+    const fs = emptyFolder().failWrites(MEMORY_FILE_NAME, { stage: 'close' })
+    expect(await connectChosenFolder(fs.root, { saveHandle: async () => {} })).toMatchObject({ ok: false, stage: 'create' })
+  })
+
+  it('reports stage "remember" when the folder handle could not be saved', async () => {
+    const fs = folderWithMemory()
+    const result = await connectChosenFolder(fs.root, { saveHandle: async () => { throw new Error('IndexedDB unavailable') } })
+    expect(result).toMatchObject({ ok: false, stage: 'remember' })
+    expect(fs.read(MEMORY_FILE_NAME)).toBe(EXISTING_MEMORY)
+  })
+
+  it('describes each stage accurately, and permission problems the same at every stage', () => {
+    const boom = new Error('x')
+    expect(describeConnectError(boom, 'check')).toMatch(/could not check this folder/)
+    expect(describeConnectError(boom, 'create')).toMatch(/could not start a new memory/)
+    expect(describeConnectError(boom, 'create')).toMatch(/empty kaizen_memory\.json may have been left/)
+    expect(describeConnectError(boom, 'remember')).toMatch(/could not remember this folder/)
+    expect(describeConnectError(namedError('NotAllowedError'), 'create')).toMatch(/not allowed/)
+    for (const stage of ['check', 'create', 'remember']) {
+      expect(describeConnectError(boom, stage)).toMatch(/was not connected\. Nothing already in it was changed/)
     }
   })
 })
