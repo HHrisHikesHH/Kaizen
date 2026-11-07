@@ -14,11 +14,22 @@
  *   W3  our size check         → writable.close()
  *
  * W2 and W3 are detectable and must keep the other file byte-identical.
+ *
+ * Kaizen also writes with createWritable({ mode: 'exclusive' }). That locks out
+ * other File System Access API writers in this browser (another Kaizen tab)
+ * while initialisation writes, and fails closed if one is already open. It
+ * does not lock out other programs or sync clients, which is why the W1–W3
+ * checks stay.
  * W1 is not, for a zero-byte file only: after create: true, an empty file that
  * appeared in W1 is indistinguishable from the empty file create: true makes.
  */
-import { describe, it, expect } from 'vitest'
-import { MEMORY_FILE_NAME, initializeMemoryFileIfMissing, connectChosenFolder } from '../../src/utils/memoryStore.js'
+import { describe, it, expect, vi } from 'vitest'
+import {
+  MEMORY_FILE_NAME,
+  initializeMemoryFileIfMissing,
+  connectChosenFolder,
+  describeConnectError,
+} from '../../src/utils/memoryStore.js'
 import { createFakeFileSystem } from '../support/fakeFileSystem.js'
 
 const OTHER_MEMORY = '{\n\t"practitionerName": "SYNTHETIC — Ravi",\n\t"createdAt": "2025-03-02T08:00:00.000Z"\n}\n'
@@ -141,5 +152,133 @@ describe('initializeMemoryFileIfMissing races', () => {
     const fs = createFakeFileSystem().failWrites(MEMORY_FILE_NAME, { stage: 'write' })
     await expect(initializeMemoryFileIfMissing(fs.root)).rejects.toMatchObject({ name: 'InvalidStateError' })
     expect(fs.writeLog).toEqual([])
+  })
+})
+
+/** Like racingFolder, but `onEvent` may be async (it awaits other writers). */
+function asyncRacingFolder(onEvent) {
+  const fs = createFakeFileSystem()
+  const root = fs.root
+  const handle = {
+    kind: 'directory',
+    name: root.name,
+    async getFileHandle(name, opts) {
+      if (!opts?.create) return root.getFileHandle(name, opts)
+      const fileHandle = await root.getFileHandle(name, opts)
+      await onEvent('created', fs)
+      return {
+        kind: 'file',
+        name: fileHandle.name,
+        getFile: () => fileHandle.getFile(),
+        async createWritable(o) {
+          const w = await fileHandle.createWritable(o)
+          return {
+            write: async (d) => {
+              await w.write(d)
+              await onEvent('written', fs)
+            },
+            close: () => w.close(),
+            abort: () => w.abort(),
+          }
+        },
+      }
+    },
+  }
+  return { fs, handle }
+}
+
+describe('exclusive writer during initialisation', () => {
+  it('fails closed when another tab already holds an exclusive writer: nothing committed, handle not saved', async () => {
+    let other
+    const { fs, handle } = asyncRacingFolder(async (stage, f) => {
+      if (stage === 'created') other = await f.holdWriter(MEMORY_FILE_NAME, 'exclusive')
+    })
+    const saveHandle = vi.fn(async () => {})
+
+    const result = await connectChosenFolder(handle, { saveHandle })
+
+    expect(result).toMatchObject({ ok: false, reason: 'error', stage: 'create' })
+    expect(result.error.name).toBe('NoModificationAllowedError')
+    expect(saveHandle).not.toHaveBeenCalled()
+    expect(fs.writeLog).toEqual([])
+
+    // The other tab finishes; its file is what remains, byte-identical.
+    await other.commit(OTHER_MEMORY)
+    expect(fs.read(MEMORY_FILE_NAME)).toBe(OTHER_MEMORY)
+  })
+
+  it('fails closed when another tab holds an ordinary (siloed) writer, with no siloed fallback', async () => {
+    let other
+    const { fs, handle } = asyncRacingFolder(async (stage, f) => {
+      if (stage === 'created') other = await f.holdWriter(MEMORY_FILE_NAME, 'siloed')
+    })
+    const saveHandle = vi.fn(async () => {})
+
+    const result = await connectChosenFolder(handle, { saveHandle })
+
+    expect(result).toMatchObject({ ok: false, stage: 'create' })
+    expect(result.error.name).toBe('NoModificationAllowedError')
+    expect(saveHandle).not.toHaveBeenCalled()
+    // Had Kaizen fallen back to a siloed writer, it would have committed here.
+    expect(fs.writeLog).toEqual([])
+    await other.commit(OTHER_MEMORY)
+    expect(fs.read(MEMORY_FILE_NAME)).toBe(OTHER_MEMORY)
+  })
+
+  it('keeps another tab from opening a writer while Kaizen is writing', async () => {
+    let otherError
+    const { fs, handle } = asyncRacingFolder(async (stage, f) => {
+      if (stage !== 'written') return
+      otherError = await f.holdWriter(MEMORY_FILE_NAME, 'siloed').then(
+        () => null,
+        (e) => e
+      )
+    })
+
+    expect(await initializeMemoryFileIfMissing(handle)).toBe('created')
+    expect(otherError?.name).toBe('NoModificationAllowedError')
+    expect(fs.writeLog).toHaveLength(1)
+    expect(Object.keys(fs.readJSON(MEMORY_FILE_NAME)).sort()).toEqual(['createdAt', 'initialized'])
+  })
+
+  it('releases the lock after success and after a failure', async () => {
+    const ok = createFakeFileSystem()
+    await initializeMemoryFileIfMissing(ok.root)
+    await expect(ok.holdWriter(MEMORY_FILE_NAME, 'exclusive')).resolves.toBeTruthy()
+
+    const failing = createFakeFileSystem().failWrites(MEMORY_FILE_NAME, { stage: 'write' })
+    await expect(initializeMemoryFileIfMissing(failing.root)).rejects.toMatchObject({ name: 'InvalidStateError' })
+    await expect(failing.holdWriter(MEMORY_FILE_NAME, 'exclusive')).resolves.toBeTruthy()
+  })
+
+  it('fails closed in a browser that ignores the mode option, instead of writing unlocked', async () => {
+    const fs = createFakeFileSystem().ignoreWritableMode()
+    const saveHandle = vi.fn(async () => {})
+
+    const result = await connectChosenFolder(fs.root, { saveHandle })
+
+    expect(result).toMatchObject({ ok: false, stage: 'create' })
+    expect(result.error.name).toBe('ExclusiveWriteUnsupportedError')
+    expect(saveHandle).not.toHaveBeenCalled()
+    expect(fs.writeLog).toEqual([])
+  })
+
+  it('an existing memory never reaches the writer, so contention cannot affect it', async () => {
+    const fs = createFakeFileSystem({ files: { [MEMORY_FILE_NAME]: OTHER_MEMORY } })
+    const other = await fs.holdWriter(MEMORY_FILE_NAME, 'exclusive')
+    const saveHandle = vi.fn(async () => {})
+
+    expect(await connectChosenFolder(fs.root, { saveHandle })).toEqual({ ok: true, memory: 'existing' })
+    expect(fs.read(MEMORY_FILE_NAME)).toBe(OTHER_MEMORY)
+    await other.release()
+  })
+
+  it('explains contention and an unsupported lock, and says nothing was changed', () => {
+    const named = (n) => Object.assign(new Error(n), { name: n })
+    const busy = describeConnectError(named('NoModificationAllowedError'), 'create')
+    const unsupported = describeConnectError(named('ExclusiveWriteUnsupportedError'), 'create')
+    expect(busy).toMatch(/Another Kaizen tab or program was writing kaizen_memory\.json/)
+    expect(unsupported).toMatch(/could not reserve kaizen_memory\.json/)
+    for (const m of [busy, unsupported]) expect(m).toMatch(/was not connected\. Nothing already in it was changed/)
   })
 })

@@ -85,11 +85,17 @@ export async function initializeMemoryFileIfMissing(handle, data = defaultMemory
   const before = await fileHandle.getFile()
   if (before.size > 0) return 'existing'
 
-  // createWritable() writes to a swap file and close() replaces whatever is at
-  // the path, so check again just before committing: if anything changed the
-  // file meanwhile (another tab, a sync client), discard our write and keep it.
-  const writable = await fileHandle.createWritable()
+  // Exclusive mode: while this writer is open, no other File System Access API
+  // writer (another Kaizen tab, say) can open the file, and if one is already
+  // open this rejects with NoModificationAllowedError. That error is passed
+  // up: the connection fails closed, with no fallback to the default (siloed)
+  // mode. It does not stop other programs or sync clients writing the file.
+  const writable = await fileHandle.createWritable({ mode: 'exclusive' })
   try {
+    await assertExclusiveWriterHeld(fileHandle)
+    // createWritable() writes to a swap file and close() replaces whatever is
+    // at the path, so check again just before committing: if anything changed
+    // the file meanwhile (a sync client, another program), discard our write.
     await writable.write(JSON.stringify(data, null, 2))
     const now = await fileHandle.getFile()
     if (now.size !== 0 || now.lastModified !== before.lastModified) {
@@ -101,14 +107,37 @@ export async function initializeMemoryFileIfMissing(handle, data = defaultMemory
     throw error
   }
   // What the File System Access API cannot guarantee (it has no exclusive
-  // create and no compare-and-swap):
-  //  - a change landing between the check above and close() is not seen;
+  // create and no compare-and-swap, and the exclusive writer only locks out
+  // other writers using this API in this browser, not other programs or sync
+  // clients):
+  //  - a change by another program landing between the check above and
+  //    close() is not seen;
   //  - a zero-byte file that appeared between checkMemoryFile() and
   //    create: true looks exactly like the one create: true makes, so it
   //    receives the default memory (it had no bytes to lose).
   // See tests/storage/memoryFileRace.test.js.
   await writable.close()
   return 'created'
+}
+
+/**
+ * A browser that does not know createWritable's `mode` option ignores it and
+ * opens an ordinary siloed writer. Detect that rather than silently running
+ * without the lock: while our exclusive writer is open, a second writer must
+ * be refused with NoModificationAllowedError.
+ */
+async function assertExclusiveWriterHeld(fileHandle) {
+  let probe
+  try {
+    probe = await fileHandle.createWritable()
+  } catch (error) {
+    if (error?.name === 'NoModificationAllowedError') return
+    throw error
+  }
+  await probe.abort().catch(() => {})
+  const error = new Error('This browser did not lock kaizen_memory.json for exclusive writing.')
+  error.name = 'ExclusiveWriteUnsupportedError'
+  throw error
 }
 
 /**
@@ -151,6 +180,12 @@ export function describeConnectError(error, stage = 'check') {
   }
   if (name === 'TypeMismatchError') {
     return 'This folder has a folder named kaizen_memory.json where Kaizen expects a file, so it was not connected. Nothing already in it was changed.'
+  }
+  if (name === 'NoModificationAllowedError') {
+    return 'Another Kaizen tab or program was writing kaizen_memory.json in this folder at the same moment, so it was not connected. Nothing already in it was changed. Close other Kaizen tabs and try again.'
+  }
+  if (name === 'ExclusiveWriteUnsupportedError') {
+    return 'This browser could not reserve kaizen_memory.json while starting a new memory, so the folder was not connected. Nothing already in it was changed. Please update Chrome and try again.'
   }
   if (stage === 'create') {
     return 'Kaizen could not start a new memory in this folder, so it was not connected. Nothing already in it was changed, though an empty kaizen_memory.json may have been left behind. Please try again.'
