@@ -1,17 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useMemory } from '../context/MemoryContext'
 import { createMemoryBackup, estimateMemorySize } from '../utils/backupManager'
-import { saveFolderHandle, ensureMemoryFileInFolder, readMemoryFile, updateMemoryFile } from '../utils/memoryStore'
+import { connectChosenFolder, describeConnectError, readMemoryFile, updateMemoryFile } from '../utils/memoryStore'
 import './SettingsPage.css'
-
-async function folderHasMemoryFile(handle) {
-  try {
-    await handle.getFileHandle('kaizen_memory.json', { create: false })
-    return true
-  } catch {
-    return false
-  }
-}
 
 export function SettingsPage() {
   const { folderHandle, setFolderHandle } = useMemory()
@@ -50,29 +41,40 @@ export function SettingsPage() {
   const handleConnectDifferent = async () => {
     if (typeof window.showDirectoryPicker !== 'function') return
     setReconnectMessage(null)
+    let handle
     try {
-      const handle = await window.showDirectoryPicker()
-      const hasMemory = await folderHasMemoryFile(handle)
-      if (hasMemory) {
-        await saveFolderHandle(handle)
-        setFolderHandle(handle)
-        setReconnectMessage('Memory reconnected. Welcome back.')
-      } else {
-        setPendingHandle(handle)
-        setShowNewFolderWarning(true)
-      }
+      handle = await window.showDirectoryPicker({ mode: 'readwrite' })
     } catch {
-      // User cancelled
+      return // User cancelled
+    }
+    // An existing memory is reconnected as it is. A folder without one waits
+    // for the confirmation below. Any other error connects nothing.
+    const result = await connectChosenFolder(handle, { createIfMissing: false })
+    if (result.ok) {
+      setFolderHandle(handle)
+      setReconnectMessage('Memory reconnected. Welcome back.')
+    } else if (result.reason === 'missing') {
+      setPendingHandle(handle)
+      setShowNewFolderWarning(true)
+    } else {
+      console.error(result.error)
+      setReconnectMessage(describeConnectError(result.error))
     }
   }
 
   const handleConfirmNewFolder = async () => {
     if (!pendingHandle) return
-    await ensureMemoryFileInFolder(pendingHandle)
-    await saveFolderHandle(pendingHandle)
-    setFolderHandle(pendingHandle)
+    const handle = pendingHandle
     setPendingHandle(null)
     setShowNewFolderWarning(false)
+    // Checks again before writing, so a memory file that appeared meanwhile is kept.
+    const result = await connectChosenFolder(handle)
+    if (!result.ok) {
+      console.error(result.error)
+      setReconnectMessage(describeConnectError(result.error))
+      return
+    }
+    setFolderHandle(handle)
     setReconnectMessage('Memory reconnected. Welcome back.')
   }
 

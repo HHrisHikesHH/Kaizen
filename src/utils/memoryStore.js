@@ -38,15 +38,97 @@ export async function getFolderHandle() {
   })
 }
 
+export const MEMORY_FILE_NAME = 'kaizen_memory.json'
+
+function defaultMemoryData() {
+  return { initialized: true, createdAt: new Date().toISOString() }
+}
+
 /**
- * Write kaizen_memory.json into the chosen folder (init or update).
+ * Find out whether the folder already holds kaizen_memory.json.
+ *
+ *   { status: 'exists' }          the file is there (its contents are not read)
+ *   { status: 'missing' }         the browser reported NotFoundError
+ *   { status: 'error', error }    anything else: permission refused, a folder
+ *                                 with that name, an unexpected failure
+ *
+ * Only NotFoundError counts as absence. Every other error means "we could not
+ * tell", and callers must not treat that as an empty folder.
  */
-export async function ensureMemoryFileInFolder(handle, data = { initialized: true, createdAt: new Date().toISOString() }) {
-  if (!handle || typeof handle.getFileHandle !== 'function') return
-  const fileHandle = await handle.getFileHandle('kaizen_memory.json', { create: true })
+export async function checkMemoryFile(handle) {
+  if (!handle || typeof handle.getFileHandle !== 'function') {
+    return { status: 'error', error: new TypeError('No folder was chosen.') }
+  }
+  try {
+    await handle.getFileHandle(MEMORY_FILE_NAME, { create: false })
+    return { status: 'exists' }
+  } catch (error) {
+    if (error?.name === 'NotFoundError') return { status: 'missing' }
+    return { status: 'error', error }
+  }
+}
+
+/**
+ * Create kaizen_memory.json only if the folder does not have one.
+ * Never overwrites: an existing file is left byte-for-byte as it was.
+ *
+ * Resolves 'existing' or 'created'. Rejects (without writing) when the check
+ * fails for any reason other than NotFoundError, or when the write fails.
+ */
+export async function initializeMemoryFileIfMissing(handle, data = defaultMemoryData()) {
+  const check = await checkMemoryFile(handle)
+  if (check.status === 'exists') return 'existing'
+  if (check.status === 'error') throw check.error
+
+  const fileHandle = await handle.getFileHandle(MEMORY_FILE_NAME, { create: true })
+  // If a file appeared since the check, it has content: keep it.
+  const current = await fileHandle.getFile()
+  if (current.size > 0) return 'existing'
+
   const writable = await fileHandle.createWritable()
   await writable.write(JSON.stringify(data, null, 2))
   await writable.close()
+  return 'created'
+}
+
+/**
+ * Connect a folder the user just chose, without ever replacing its memory.
+ *
+ * - existing memory file → left untouched, handle saved
+ * - no memory file       → created only when createIfMissing is true, then handle saved;
+ *                          otherwise { ok: false, reason: 'missing' } and nothing is written
+ * - any other error      → nothing is written and the handle is NOT saved
+ *
+ * Returns { ok: true, memory: 'existing' | 'created' }
+ *      or { ok: false, reason: 'missing' | 'error', error? }.
+ */
+export async function connectChosenFolder(handle, { createIfMissing = true, saveHandle = saveFolderHandle } = {}) {
+  try {
+    const check = await checkMemoryFile(handle)
+    if (check.status === 'error') return { ok: false, reason: 'error', error: check.error }
+    if (check.status === 'missing' && !createIfMissing) return { ok: false, reason: 'missing' }
+
+    const memory = check.status === 'exists' ? 'existing' : await initializeMemoryFileIfMissing(handle)
+    await saveHandle(handle)
+    return { ok: true, memory }
+  } catch (error) {
+    return { ok: false, reason: 'error', error }
+  }
+}
+
+/**
+ * Words for a failed connection. The folder was not connected, and no existing
+ * file in it was changed.
+ */
+export function describeConnectError(error) {
+  const name = error?.name
+  if (name === 'NotAllowedError' || name === 'SecurityError') {
+    return 'Kaizen was not allowed to open this folder, so it was not connected. Nothing already in it was changed. Choose the folder again and allow Kaizen to view and edit its files.'
+  }
+  if (name === 'TypeMismatchError') {
+    return 'This folder has a folder named kaizen_memory.json where Kaizen expects a file, so it was not connected. Nothing already in it was changed.'
+  }
+  return 'Kaizen could not check this folder for an existing memory, so it was not connected. Nothing already in it was changed. Please try again.'
 }
 
 /**

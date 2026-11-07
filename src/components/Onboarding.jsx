@@ -1,19 +1,28 @@
 import { useState } from 'react'
-import { saveFolderHandle, ensureMemoryFileInFolder } from '../utils/memoryStore'
+import { connectChosenFolder, describeConnectError } from '../utils/memoryStore'
 import './Onboarding.css'
 
 export function Onboarding({ onComplete, setFolderHandle }) {
   const [step, setStep] = useState(1)
   const [picking, setPicking] = useState(false)
   const [chosenHandle, setChosenHandle] = useState(null)
+  const [connectError, setConnectError] = useState(null)
 
   async function handleChooseFolder() {
     if (typeof showDirectoryPicker !== 'undefined') {
       setPicking(true)
+      setConnectError(null)
       try {
-        const handle = await showDirectoryPicker()
-        await saveFolderHandle(handle)
-        await ensureMemoryFileInFolder(handle)
+        const handle = await showDirectoryPicker({ mode: 'readwrite' })
+        // Keeps an existing kaizen_memory.json untouched; creates one only when
+        // the folder genuinely has none. On any other error nothing is written,
+        // the handle is not saved and onboarding stays on this step.
+        const result = await connectChosenFolder(handle)
+        if (!result.ok) {
+          console.error(result.error)
+          setConnectError(describeConnectError(result.error))
+          return
+        }
         setChosenHandle(handle)
         setStep(3)
       } catch (err) {
@@ -67,6 +76,9 @@ export function Onboarding({ onComplete, setFolderHandle }) {
             >
               {picking ? 'Choosing…' : 'Choose Folder'}
             </button>
+            {connectError && (
+              <p className="onboarding__hint" role="alert">{connectError}</p>
+            )}
             {typeof showDirectoryPicker === 'undefined' && (
               <p className="onboarding__hint">Use Chrome to choose a folder.</p>
             )}
