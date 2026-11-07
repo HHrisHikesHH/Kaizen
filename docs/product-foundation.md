@@ -1,6 +1,6 @@
 # Kaizen Product Foundation
 
-**Status:** draft v0.1, written 2026-11-08. The structure has been approved; the open decisions in section 14 have **not** been made yet. Where a decision is pending, this document gives a recommendation, not a requirement. Nothing here is implemented.
+**Status:** v0.2, 2026-11-08. The structure is approved, and decisions D1–D15 were made on 2026-11-08 (recorded in section 14). Nothing here is implemented yet. Each capability still gets its own design check-in before it is built.
 
 **Basis:** the code on `main` at `86b3dea`. File and line references point to that commit and will drift as the code changes. The evidence behind each claim is in Appendix A.
 
@@ -18,7 +18,7 @@
 The cycle is Observe → Understand → Align → Act → Review. It describes how the existing pieces relate: the daily close is Observe, the weekly review is Understand and Align, the experiment is Act, and the next review is Review. It is not five pages.
 
 ### 2. Intended user and problem
-- **User (assumption):** a reflective adult who wants to understand themselves and live deliberately. They value privacy, write sometimes but not always, and use desktop Chrome (a current constraint). Today the primary user is probably the project owner. See decision D1.
+- **User (assumption):** a reflective adult who wants to understand themselves and live deliberately. They value privacy, write sometimes but not always, and use desktop Chrome (a current constraint). **Decision D1:** Kaizen is a personal tool now and may become a product later. It is designed for the project owner, with no extra onboarding or support work for now, but design choices must not block offering it to others later. For example, avoid hard-coding personal content and keep the wording understandable to a stranger.
 - **Problem:** people collect days without learning from them. Habit trackers turn growth into compliance and streaks. Journals hold insight but don't turn it into action. AI chat can be insightful but takes the interpretation away from the user and creates dependence.
 - **Not for:** treating mental-health conditions, or crisis support. Kaizen should say this plainly and point to real support when needed (see section 9).
 
@@ -61,8 +61,8 @@ Kaizen will not be:
 - **A. Quiet close:** the close button is reachable without scrolling past every field. Pressing it with nothing filled in is a full, valid closure. This already works (`HomePage.jsx:144`); the proposal makes it visible as a first-class choice.
 - **B. Quick reflection:** mood, a closing word and at most one line. These already exist except the single line, which would reuse the journal field.
 - **C. Deep reflection:** the existing journal and prompt, with an optional "another question" control to draw a second prompt.
-- **A difficult day:** a per-entry "keep this day private" option, so the entry is never included in any AI package (see C2). Optionally, a gentler prompt pool on request (decision D3).
-- **Intentional rest (optional, D3):** a "let today pass" close that records the day as consciously rested, distinct from never opening the app. It is never counted against the user.
+- **A difficult day:** a per-entry "keep this day private" option, so the entry is never included in any AI package (see C2). A separate, gentler prompt pool was considered and not adopted (D3).
+- **Intentional rest (adopted, D3):** a "let today pass" close that records the day as consciously rested, distinct from never opening the app. It is never counted against the user.
 
 **The states are kept distinct (additive, backwards compatible):**
 | State | Recorded as | Treatment |
@@ -76,7 +76,8 @@ Kaizen will not be:
 **Related changes:**
 - Stop auto-ticking the journaling habit at 20 words. Writing and the journaling practice are different things, and a word threshold quietly sets a minimum.
 - Week dots and the weekly summary stop calling days "missed". The file field `missedDays` stays for compatibility; only the presentation and the AI wording change.
-- Reconsider the hard lock after closing (D4).
+- **Reopening (D4):** a closed day can be reopened the same evening, until the local date changes. Past days stay as they were; there are no notes added to past days.
+- **Depth on one page (D2):** progressive disclosure on a single page, with no mode picker.
 
 ### 7. Weekly reflection and action loop (proposed)
 The eight-step sequence proposed during discovery is right. **Most of it should be led by the user and run locally, with AI as an optional middle step.**
@@ -136,7 +137,7 @@ The eight-step sequence proposed during discovery is right. **Most of it should 
 ### 10. Privacy principles
 1. Local-first is the architecture, not a setting. There is no server, account, API key or telemetry, and no network call carries user content.
 2. AI sharing is manual, previewed and selective. The package is always shown before copying; this includes Growth, which currently copies without showing anything.
-3. The user chooses what goes in a package: per category (journals per day, habit notes, moods, closing words, intentions, prior AI notes, name) and per entry (private days are excluded).
+3. The user chooses what goes in a package: per category (journals per day, habit notes, moods, closing words, intentions, prior AI notes, name) and per entry (private days are excluded). **The default is minimal (D8):** journals are opted in day by day.
 4. Raw records (`YYYY/MM`), the user's own reviews and AI-derived text (`AI_notes/`) stay in separate files, and each AI item is labelled with where it came from.
 5. Everything Kaizen stores is readable by the user, inside the app and as plain JSON in their folder.
 6. Local processing is the default: all counts, evidence and "then and now" views are computed on the device.
@@ -152,11 +153,12 @@ The eight-step sequence proposed during discovery is right. **Most of it should 
 
 ### 12. Prioritised roadmap
 **Foundation (prerequisites, before new features)**
-- Approve this foundation.
+- Approve this foundation. (Decisions recorded on 2026-11-08.)
 - Run the two pending Chrome checks.
 - Fix the 3 parser defects so the expected-failure tests pass.
 - Show legacy summary contents.
-- Rewrite the AI-boundary wording in all packages (C3).
+- Rewrite the AI-boundary wording in all packages, including the safety line (C3; D10, D13).
+- Remove the unrouted `JournalPage.jsx` and its stylesheet (D14).
 
 **Next development phase, in recommended order**
 1. **C1** Visible AI notes.
@@ -193,6 +195,8 @@ The eight-step sequence proposed during discovery is right. **Most of it should 
 - **Why and problem:** the AI stores 10 fields about the user that the user never sees (`generateSundayPackage.js:219`, `README.md:108`).
 - **Philosophy:** principle 4.
 - **UX:** a "What the AI noted" disclosure under each reflection in Growth and Sunday. Plain text, collapsed by default.
+- **Letters (D9):** the letter the AI writes to its next session stays, and it is visible to the user like every other field.
+- **Growth page metrics (D12):** C1 also removes the word-count arc, the word-count shading of the presence map, and "Longest continuity", since it already touches the Growth page.
 - **Tech:** read the existing `AI_notes` JSON; no schema change.
 - **Data and privacy:** read-only.
 - **Acceptance criteria:**
@@ -207,14 +211,20 @@ The eight-step sequence proposed during discovery is right. **Most of it should 
   - Category checkboxes and per-day journal toggles above the preview.
   - The preview updates as selections change.
   - Copying always copies exactly what is shown.
-- **Tech:** the package generators take an `include` options object. The default reproduces today's package except for the name (D8).
+- **Defaults (D8, minimal):**
+  - Ticked by default: moods, closing words and plain counts (days closed, habit days).
+  - Not ticked by default: journal entries (opted in per day), habit notes and the user's name.
+  - Intentions and prior AI notes: to be settled in the C2 design check-in.
+- **Tech:** the package generators take an `include` options object, which defaults to the minimal set above.
 - **Data:** an additive optional `private: true` on daily entries.
 - **Acceptance criteria:**
   - Excluded items never appear in the copied text.
   - A private entry is excluded from every package type.
   - Growth shows a preview.
   - Tests cover each generator.
-- **Risks:** more controls on a calm page, so keep them collapsed under a "Choose what to share" toggle.
+- **Risks:**
+  - More controls on a calm page, so keep them collapsed under a "Choose what to share" toggle.
+  - With the minimal default, an AI conversation has little to work with unless journals are opted in. The page must say plainly what is and isn't included, especially the first time, because today's package includes everything.
 
 **C3 — AI boundaries and the observation format**
 - **Why:** the current wording tells the AI to read missed habits as avoidance and casts it as therapist or teacher.
@@ -238,6 +248,7 @@ The eight-step sequence proposed during discovery is right. **Most of it should 
   - An empty close records `sessionComplete: true` and is counted (already tested in `tests/utils/sessionSave.test.js`).
   - Writing 20+ words no longer changes habit state.
   - A rest day is distinguishable from no record.
+  - A closed day can be reopened until the local date changes, and only then (D4).
 - **Risks:** changing the visual identity of Home, so changes must stay within the existing styles.
 
 **C5 — Self-led weekly review**
@@ -285,22 +296,24 @@ Kaizen will not have analytics. These criteria are judged through the user's own
   - every AI observation shown with evidence and a question
   - all stored AI text visible to the user
 
-### 14. Open decisions requiring approval
-- **D1:** Is Kaizen primarily your personal tool, or a product for others? This changes how much onboarding, validation and support is needed.
-- **D2:** Should the daily depths use progressive disclosure on one page (recommended) or an explicit choice of mode?
-- **D3:** Should there be a "let today pass" rest state, and optionally a gentler prompt pool for difficult days?
-- **D4:** After closing a day, can the user reopen it the same evening, and add a note to a past day? (Today the day is hard-locked.)
-- **D5:** Should the journaling auto-tick at 20 words be removed? (Recommended.)
-- **D6:** When should the fixed five habits become user-chosen practices: the next phase, later, or never?
-- **D7:** Should the weekly review be available from Sunday to Saturday, or only on Sunday as now?
-- **D8:** What should a package include by default? Recommended: everything except the user's name, with per-day opt-out.
-- **D9:** Should all AI notes be visible to the user (recommended), and should the "letter to next session" concept stay at all?
-- **D10:** Should the AI role wording change from "Buddhist teacher / contemplative therapist" to "reflection partner"? (Recommended.)
-- **D11:** Should long-term reviews be ungated and built from primary records, keeping AI-on-AI summaries only as context?
-- **D12:** Should the Growth page drop the word-count arc, the word-based shading and "Longest continuity"?
-- **D13:** Should a safety line be added to the AI instructions?
-- **D14:** Should the unrouted `JournalPage.jsx` be retired?
-- **D15:** Is the order of the next phase (C1 → C2 → C4 → C5 → C6) right?
+### 14. Decisions (made 2026-11-08)
+| # | Question | Decision |
+|---|---|---|
+| D1 | Who is Kaizen for? | A personal tool now, possibly a product later. Don't add onboarding or support work yet, but avoid choices that would block offering it to others |
+| D2 | How are the daily depths presented? | One page with progressive depth; no mode picker |
+| D3 | Is there a rest state? | Yes: an optional "let today pass" close (`closedAs: 'rest'`). No separate gentler prompt pool |
+| D4 | Can a closed day be edited? | It can be reopened the same evening, until the local date changes. Past days stay unchanged |
+| D5 | Journaling auto-tick at 20 words | Removed |
+| D6 | User-chosen practices instead of the fixed five habits | A later phase, after the weekly loop. It needs a migration plan |
+| D7 | Weekly review window | From Sunday through the following Saturday. Sunday stays the suggested day |
+| D8 | Default contents of an AI package | **Minimal.** Moods, closing words and counts are ticked; journals are opted in per day; habit notes and name are off. Intentions and prior AI notes are to be settled in the C2 design check-in. *This differs from the original recommendation, which was everything except the name* |
+| D9 | AI notes | All fields are visible to the user. The letter to the next session stays, and is visible too |
+| D10 | AI role wording | "A careful, curious reflection partner. Not a therapist or teacher." |
+| D11 | Long-term reviews | Ungated. Built from the user's own entries, experiments and confirmed observations; earlier AI notes are context only |
+| D12 | Growth page metrics | Remove the word-count arc, the word-count shading and "Longest continuity" (done with C1) |
+| D13 | Safety line in AI instructions | Added (done with C3) |
+| D14 | Unrouted `JournalPage.jsx` | Retired (Foundation tidy-up) |
+| D15 | Order of the next phase | C1 → C2 → C4 → C5 → C6, after the Foundation items |
 
 ### Assumptions and uncertainties
 - There is no usage data. The user model and the difficult-day scenarios are reasoned, not observed.
