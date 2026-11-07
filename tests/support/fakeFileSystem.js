@@ -14,6 +14,12 @@
  *   - When permission is not "granted", every operation rejects with "NotAllowedError".
  *   - createWritable() writes to a private buffer; the file only changes when
  *     close() resolves (Chrome writes to a swap file and swaps on close).
+ *   - createWritable({ mode }) takes Chrome's writer lock on the file, as
+ *     measured in Chromium 152: 'siloed' (default) writers coexist; an
+ *     'exclusive' writer needs no other writer open, and while it is open any
+ *     other createWritable() rejects with "NoModificationAllowedError".
+ *     close() and abort() release the lock. getFile() never needs a lock.
+ *     An unknown mode rejects with TypeError, as Chrome does.
  *
  * Test controls (on FakeFileSystem):
  *   seed(path, content)          create a file (objects are JSON-encoded, strings stored verbatim,
@@ -23,6 +29,10 @@
  *   setPermission(state)         'granted' | 'prompt' | 'denied'
  *   setRequestPermissionBehavior('grant' | 'deny' | 'throw')
  *   failWrites(match, { stage, error })  inject failures at 'create' | 'write' | 'close'
+ *   holdWriter(path, mode)       open a writer as another tab would; returns
+ *                                { commit(content), release() }
+ *   ignoreWritableMode()         behave like a browser without the `mode`
+ *                                option: every writer is siloed, nothing locks
  *   clearWriteFailures()
  *   writeLog                     every successful commit, in order: { path, content }
  */
@@ -62,6 +72,7 @@ export class FakeFileSystem {
     this.requestPermissionBehavior = 'grant'
     this.writeFailures = []
     this.writeLog = []
+    this.writableModeSupported = true
     this.rootNode = { kind: 'directory', children: new Map() }
     this.root = new FakeDirectoryHandle(this, this.rootNode, rootName, [])
     for (const [path, content] of Object.entries(files)) this.seed(path, content)
@@ -136,6 +147,28 @@ export class FakeFileSystem {
   failWrites(match, { stage = 'write', error } = {}) {
     this.writeFailures.push({ match, stage, error })
     return this
+  }
+
+  ignoreWritableMode() {
+    this.writableModeSupported = false
+    return this
+  }
+
+  /** Another writer (a second tab) opens the file at `path`. Rejects like createWritable(). */
+  async holdWriter(path, mode = 'siloed') {
+    const parts = splitPath(path)
+    const name = parts.pop()
+    let dir = this.root
+    for (const part of parts) dir = await dir.getDirectoryHandle(part, { create: true })
+    const fileHandle = await dir.getFileHandle(name, { create: true })
+    const writable = await fileHandle.createWritable({ mode })
+    return {
+      async commit(content) {
+        await writable.write(encode(content))
+        await writable.close()
+      },
+      release: () => writable.abort(),
+    }
   }
 
   clearWriteFailures() {
@@ -269,14 +302,28 @@ export class FakeFileHandle extends FakeHandleBase {
     return new File([content], this.name, { type: 'application/json', lastModified })
   }
 
-  async createWritable({ keepExistingData = false } = {}) {
+  async createWritable({ keepExistingData = false, mode = 'siloed' } = {}) {
+    if (mode !== 'siloed' && mode !== 'exclusive') {
+      throw new TypeError(`The provided value '${mode}' is not a valid enum value of type FileSystemWritableFileStreamMode.`)
+    }
     this._fs.assertPermission()
     const fs = this._fs
     const node = this._node
     const path = this._path
     fs.maybeFailWrite(path, 'create')
+    const lockMode = fs.writableModeSupported ? mode : 'siloed'
+    const locks = (node.writerLocks ??= { siloed: 0, exclusive: 0 })
+    if (locks.exclusive > 0 || (lockMode === 'exclusive' && locks.siloed > 0)) {
+      throw domError('NoModificationAllowedError', 'An attempt was made to modify an object where modifications are not allowed.')
+    }
+    locks[lockMode] += 1
     let buffer = keepExistingData ? node.content : ''
     let closed = false
+    const release = () => {
+      if (closed) return
+      closed = true
+      locks[lockMode] -= 1
+    }
     return {
       async write(data) {
         if (closed) throw domError('TypeError', 'Stream is closed')
@@ -285,14 +332,19 @@ export class FakeFileHandle extends FakeHandleBase {
       },
       async close() {
         if (closed) throw domError('TypeError', 'Stream is closed')
-        fs.maybeFailWrite(path, 'close')
-        closed = true
+        try {
+          fs.maybeFailWrite(path, 'close')
+        } catch (err) {
+          release()
+          throw err
+        }
+        release()
         node.content = buffer
         node.lastModified = Date.now()
         fs.writeLog.push({ path, content: buffer })
       },
       async abort() {
-        closed = true
+        release()
       },
     }
   }

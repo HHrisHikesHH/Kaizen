@@ -114,3 +114,28 @@ describe('fake File System Access API', () => {
     })
   })
 })
+
+describe('FakeFileSystem writer locks (as measured in Chromium 152)', () => {
+  it('lets siloed writers coexist and blocks around an exclusive one', async () => {
+    const fs = createFakeFileSystem({ files: { 'a.json': '{}' } })
+    const fh = await fs.root.getFileHandle('a.json')
+    const s1 = await fh.createWritable()
+    const s2 = await fh.createWritable({ mode: 'siloed' })
+    await expect(fh.createWritable({ mode: 'exclusive' })).rejects.toMatchObject({ name: 'NoModificationAllowedError' })
+    await s1.abort()
+    await s2.abort()
+    const x = await fh.createWritable({ mode: 'exclusive' })
+    await expect(fh.createWritable()).rejects.toMatchObject({ name: 'NoModificationAllowedError' })
+    await expect(fh.createWritable({ mode: 'exclusive' })).rejects.toMatchObject({ name: 'NoModificationAllowedError' })
+    expect((await fh.getFile()).size).toBe(2) // reading needs no lock
+    await x.close()
+    await expect(fh.createWritable({ mode: 'exclusive' })).resolves.toBeTruthy()
+  })
+
+  it('rejects an unknown mode with TypeError', async () => {
+    const fs = createFakeFileSystem({ files: { 'a.json': '{}' } })
+    const fh = await fs.root.getFileHandle('a.json')
+    await expect(fh.createWritable({ mode: 'bogus' })).rejects.toBeInstanceOf(TypeError)
+  })
+})
+
