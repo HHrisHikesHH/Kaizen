@@ -4,8 +4,8 @@ import { useDailyEntry } from '../hooks/useDailyEntry'
 import { useWeekCompletion } from '../hooks/useWeekCompletion'
 import { useMemory } from '../context/MemoryContext'
 import { getTodayDateString } from '../utils/dailyEntry'
-import { getISOWeek, getDayOfWeek, parseLocalDateKey } from '../utils/dateHelpers'
-import { generateWeekSummary, saveWeekSummary } from '../utils/aggregateWeek'
+import { getISOWeek, getDayOfWeek } from '../utils/dateHelpers'
+import { refreshWeekSummaryFor } from '../utils/sessionSummary'
 import { useWeekPlan } from '../hooks/useWeekPlan'
 import { useLastWeekReflection } from '../hooks/useLastWeekReflection'
 import { ReflectionCard } from '../components/ReflectionCard'
@@ -33,7 +33,7 @@ function countWords(text) {
 
 export function HomePage() {
   const { folderHandle } = useMemory()
-  const { entry, updateEntry, loading } = useDailyEntry()
+  const { entry, updateEntry, commitEntry, loading } = useDailyEntry()
   const today = getTodayDateString()
   const weekCompletion = useWeekCompletion(today)
   const diyaSlotRef = useRef(null)
@@ -148,18 +148,19 @@ export function HomePage() {
     try {
       sessionStorage.setItem(CLOSING_FLOW_KEY, '1')
     } catch (_) {}
-    updateEntry({ sessionComplete: true, divaExtinguished: true })
     setPhase('fading')
-    if (folderHandle && entry?.date) {
-      const { isoYear, isoWeek } = getISOWeek(parseLocalDateKey(entry.date))
-      generateWeekSummary(isoYear, isoWeek, folderHandle).then((summary) => {
-        if (summary) saveWeekSummary(summary, folderHandle)
-      })
-    }
+    // Save the completed entry first: the weekly summary is built from the
+    // stored files, so it must not be generated until this write has landed.
+    commitEntry({ sessionComplete: true, divaExtinguished: true }).then(({ entry: saved, saved: ok }) => {
+      if (!ok || !folderHandle || !saved?.date) return
+      refreshWeekSummaryFor(saved.date, folderHandle).catch((err) =>
+        console.error('Failed to refresh week summary:', err)
+      )
+    })
     const t1 = setTimeout(() => setPhase('closing'), 1500)
     const t2 = setTimeout(() => setPhase('locked'), 5500)
     closingTimeoutsRef.current = [t1, t2]
-  }, [updateEntry, folderHandle, entry?.date])
+  }, [commitEntry, folderHandle])
 
   useEffect(() => {
     return () => {
