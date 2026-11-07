@@ -72,13 +72,13 @@ describe(`daily entry utilities (TZ=${TZ})`, () => {
       expect(await readDailyEntry(fs.root, '2026-11-06')).toBeNull()
     })
 
-    it('swallows write failures and leaves the previous file content', async () => {
+    it('reports write failures as false (no throw) and leaves the previous file content', async () => {
       const fs = createFakeFileSystem({ files: { '2026/11/2026-11-06.json': { date: '2026-11-06', mood: 'old' } } })
       fs.failWrites(/2026-11-06\.json$/, { stage: 'close' })
       const original = console.error
       console.error = () => {}
       try {
-        await expect(writeDailyEntry(fs.root, { date: '2026-11-06', mood: 'new' })).resolves.toBeUndefined()
+        await expect(writeDailyEntry(fs.root, { date: '2026-11-06', mood: 'new' })).resolves.toBe(false)
       } finally {
         console.error = original
       }

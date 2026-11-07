@@ -56,6 +56,16 @@ export function defaultEntry(dateStr) {
 /**
  * Get folder path segments for date: [YYYY, MM, filename]
  */
+/** Apply a partial update; `habits` and `journal` are merged one level deep. */
+export function mergeEntry(prev, partial) {
+  return {
+    ...prev,
+    ...partial,
+    habits: partial.habits !== undefined ? { ...prev.habits, ...partial.habits } : prev.habits,
+    journal: partial.journal !== undefined ? { ...prev.journal, ...partial.journal } : prev.journal,
+  }
+}
+
 function pathForDate(dateStr) {
   const [y, m] = dateStr.split('-')
   return [y, m, `${dateStr}.json`]
@@ -91,9 +101,10 @@ export async function readDailyEntry(handle, dateStr) {
 
 /**
  * Write daily entry to the user's folder. Creates YYYY/MM/ if needed.
+ * Returns true once the file is committed, false if the write failed.
  */
 export async function writeDailyEntry(handle, data) {
-  if (!handle || typeof handle.getDirectoryHandle !== 'function') return
+  if (!handle || typeof handle.getDirectoryHandle !== 'function') return false
   try {
     await ensurePermission(handle)
     const [y, m, filename] = pathForDate(data.date)
@@ -103,7 +114,9 @@ export async function writeDailyEntry(handle, data) {
     const writable = await fileHandle.createWritable()
     await writable.write(JSON.stringify(data, null, 2))
     await writable.close()
+    return true
   } catch (err) {
     console.error('Failed to write daily entry:', err)
+    return false
   }
 }
