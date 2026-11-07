@@ -59,10 +59,11 @@ export function parseQuarterlyNotes(rawText) {
         result[FIELD_TO_KEY[currentMultiLine]] = multiLineBuffer.join('\n').trim()
         currentMultiLine = null
         multiLineBuffer = []
+        // Fall through: this line starts the next field and is parsed below.
+      } else {
+        multiLineBuffer.push(line)
         continue
       }
-      multiLineBuffer.push(line)
-      continue
     }
 
     if (fieldMatch && FIELD_TO_KEY[fieldMatch[1]]) {
