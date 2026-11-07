@@ -80,15 +80,13 @@ USER_FACING_QUARTERLY_REFLECTION: A season.
     expect(r).toMatchObject({ quarter: 3, year: 2026, shadowPattern: 'Late nights.', userFacingQuarterlyReflection: 'A season.' })
   })
 
-  // KNOWN DEFECT (found while writing these tests; belongs to the AI phase).
-  // The quarterly, half-year and yearly parsers use a `for` loop whose
-  // `continue` skips the line that ends a multi-line field. In the closing
-  // format the letter is immediately followed by the user-facing reflection,
-  // so that reflection is silently dropped. The weekly and monthly parsers use
-  // a `while` loop and are not affected. These assertions describe the correct
-  // behaviour; `it.fails` keeps the suite green until the AI phase fixes the
-  // parsers, at which point `.fails` must be removed.
-  it.fails('KNOWN DEFECT: quarterly keeps the reflection that follows the letter', () => {
+  // Regression tests for a fixed defect. The quarterly, half-year and yearly
+  // parsers loop with `for`, and used to `continue` after closing a multi-line
+  // field, so the line that ended it (in the closing format, the user-facing
+  // reflection right after the letter) was skipped and silently dropped. The
+  // weekly and monthly parsers use `while` and were never affected. These were
+  // `it.fails` tests until the fix; their assertions are unchanged.
+  it('quarterly keeps the reflection that follows the letter', () => {
     const r = parseQuarterlyNotes(`[KAIZEN QUARTERLY NOTES — COPY THIS BACK TO YOUR APP]
 LETTER_TO_NEXT_QUARTER: Keep going.
 USER_FACING_QUARTERLY_REFLECTION: A season.
@@ -96,7 +94,7 @@ USER_FACING_QUARTERLY_REFLECTION: A season.
     expect(r).toMatchObject({ letterToNextQuarter: 'Keep going.', userFacingQuarterlyReflection: 'A season.' })
   })
 
-  it.fails('KNOWN DEFECT: half-year keeps the reflection that follows the letter', () => {
+  it('half-year keeps the reflection that follows the letter', () => {
     const r = parseHalfYearNotes(`[KAIZEN HALF-YEAR NOTES — COPY THIS BACK TO YOUR APP]
 LETTER_TO_THE_NEXT_SIX_MONTHS: Onward.
 USER_FACING_HALF_YEAR_REFLECTION: Six months.
@@ -104,7 +102,7 @@ USER_FACING_HALF_YEAR_REFLECTION: Six months.
     expect(r).toMatchObject({ letterToTheNextSixMonths: 'Onward.', userFacingHalfYearReflection: 'Six months.' })
   })
 
-  it.fails('KNOWN DEFECT: yearly keeps the reflection that follows the letter', () => {
+  it('yearly keeps the reflection that follows the letter', () => {
     const r = parseYearlyNotes(`[KAIZEN YEARLY NOTES — COPY THIS BACK TO YOUR APP]
 LETTER_TO_THE_NEXT_YEAR: Dear next year.
 USER_FACING_YEARLY_REFLECTION: A year.
@@ -146,4 +144,124 @@ USER_FACING_YEARLY_REFLECTION: A year.
 
   // Audit P0-6 belongs to the AI phase: filenames must come from the app, not these fields.
   it.todo('does not let MONTH/QUARTER/YEAR text decide where notes are saved')
+})
+
+// Regression tests for the multi-line fix in the quarterly, half-year and
+// yearly parsers. Field order matches the closing format each package
+// generator emits (generateQuarterlyPackage.js, generateHalfYearPackage.js,
+// generateYearlyPackage.js).
+const LONG_CYCLE_FORMATS = [
+  {
+    name: 'quarterly',
+    parse: parseQuarterlyNotes,
+    start: '[KAIZEN QUARTERLY NOTES — COPY THIS BACK TO YOUR APP]',
+    end: '[END KAIZEN QUARTERLY NOTES]',
+    letter: ['LETTER_TO_NEXT_QUARTER', 'letterToNextQuarter'],
+    reflection: ['USER_FACING_QUARTERLY_REFLECTION', 'userFacingQuarterlyReflection'],
+    fields: [
+      ['QUARTER', '4', 'quarter', 4],
+      ['YEAR', '2026', 'year', 2026],
+      ['THE_SEASON_IN_ONE_SENTENCE', 'A slow, honest autumn.', 'theSeasonInOneSentence'],
+      ['WHAT_BEGAN_THIS_QUARTER', 'Morning walks.', 'whatBeganThisQuarter'],
+      ['WHAT_COMPLETED_THIS_QUARTER', 'The first notebook.', 'whatCompletedThisQuarter'],
+      ['WHAT_TRANSFORMED', 'How evenings end.', 'whatTransformed'],
+      ['SHADOW_PATTERN', 'Late nights.', 'shadowPattern'],
+      ['EMERGING_STRENGTH', 'Patience.', 'emergingStrength'],
+      ['CARRY_INTO_NEXT_QUARTER', 'The walks.', 'carryIntoNextQuarter'],
+    ],
+  },
+  {
+    name: 'half-year',
+    parse: parseHalfYearNotes,
+    start: '[KAIZEN HALF-YEAR NOTES — COPY THIS BACK TO YOUR APP]',
+    end: '[END KAIZEN HALF-YEAR NOTES]',
+    letter: ['LETTER_TO_THE_NEXT_SIX_MONTHS', 'letterToTheNextSixMonths'],
+    reflection: ['USER_FACING_HALF_YEAR_REFLECTION', 'userFacingHalfYearReflection'],
+    fields: [
+      ['PERIOD', 'H2', 'period'],
+      ['YEAR', '2026', 'year', 2026],
+      ['WHO_ARRIVED_AT_THE_START', 'Someone in a hurry.', 'whoArrivedAtTheStart'],
+      ['WHO_IS_HERE_NOW', 'Someone who pauses.', 'whoIsHereNow'],
+      ['WHAT_GENUINELY_CHANGED', 'Sleep.', 'whatGenuinelyChanged'],
+      ['WHAT_REMAINED_UNCHANGED', 'The love of books.', 'whatRemainedUnchanged'],
+      ['THE_DEEPEST_PATTERN_SO_FAR', 'Rushing after calls.', 'theDeepestPatternSoFar'],
+      ['WHAT_THIS_HALF_YEAR_ASKED', 'To slow down.', 'whatThisHalfYearAsked'],
+      ['WHAT_THE_SECOND_HALF_NEEDS', 'Rest.', 'whatTheSecondHalfNeeds'],
+    ],
+  },
+  {
+    name: 'yearly',
+    parse: parseYearlyNotes,
+    start: '[KAIZEN YEARLY NOTES — COPY THIS BACK TO YOUR APP]',
+    end: '[END KAIZEN YEARLY NOTES]',
+    letter: ['LETTER_TO_THE_NEXT_YEAR', 'letterToTheNextYear'],
+    reflection: ['USER_FACING_YEARLY_REFLECTION', 'userFacingYearlyReflection'],
+    fields: [
+      ['YEAR', '2026', 'year', 2026],
+      ['THE_YEAR_IN_ONE_SENTENCE', 'A year of returning.', 'theYearInOneSentence'],
+      ['WHO_ARRIVED_IN_JANUARY', 'A tired beginner.', 'whoArrivedInJanuary'],
+      ['WHO_IS_HERE_NOW', 'A steadier practitioner.', 'whoIsHereNow'],
+      ['THE_DEEPEST_TRANSFORMATION', 'Kindness to self.', 'theDeepestTransformation'],
+      ['THE_STUBBORN_PATTERN', 'Overcommitting.', 'theStubbornPattern'],
+      ['THE_UNCLAIMED_STRENGTH', 'Listening.', 'theUnclaimedStrength'],
+      ['THE_YEAR_S_QUESTION', 'What is enough?', 'theYearsQuestion'],
+      ['WHAT_THIS_YEAR_WAS_REALLY_ABOUT', 'Attention.', 'whatThisYearWasReallyAbout'],
+      ['WHAT_THE_NEXT_YEAR_IS_CALLING_FOR', 'Depth.', 'whatTheNextYearIsCallingFor'],
+    ],
+  },
+]
+
+const MULTI_LINE_LETTER = 'Dear next one,\nremember the walks.\n\nGo gently.'
+const MULTI_LINE_REFLECTION = 'You kept returning.\nThat was the practice.'
+
+function closingBlock(fmt, { fields = fmt.fields, letter = MULTI_LINE_LETTER, reflection = MULTI_LINE_REFLECTION } = {}) {
+  return [
+    'Some conversation text before the block.',
+    fmt.start,
+    ...fields.map(([field, value]) => `${field}: ${value}`),
+    `${fmt.letter[0]}: ${letter}`,
+    `${fmt.reflection[0]}: ${reflection}`,
+    fmt.end,
+    'Anything after the block is ignored.',
+  ].join('\n')
+}
+
+function expectedFields(fmt) {
+  return Object.fromEntries(fmt.fields.map(([, value, key, parsed]) => [key, parsed ?? value]))
+}
+
+describe.each(LONG_CYCLE_FORMATS)('$name parser: multi-line fields', (fmt) => {
+  it('keeps a multi-line letter and the multi-line reflection that follows it', () => {
+    const r = fmt.parse(closingBlock(fmt))
+    expect(r.error).toBeUndefined()
+    expect(r[fmt.letter[1]]).toBe(MULTI_LINE_LETTER)
+    expect(r[fmt.reflection[1]]).toBe(MULTI_LINE_REFLECTION)
+  })
+
+  it('fills every field of the full closing format, in generator order', () => {
+    expect(fmt.parse(closingBlock(fmt))).toEqual({
+      ...expectedFields(fmt),
+      [fmt.letter[1]]: MULTI_LINE_LETTER,
+      [fmt.reflection[1]]: MULTI_LINE_REFLECTION,
+    })
+  })
+
+  it('gives the same result with Windows line endings', () => {
+    const text = closingBlock(fmt)
+    expect(fmt.parse(text.replace(/\n/g, '\r\n'))).toEqual(fmt.parse(text))
+  })
+
+  it('keeps a single-line field that comes after a multi-line field', () => {
+    const r = fmt.parse([
+      fmt.start,
+      `${fmt.letter[0]}: First line.`,
+      'Second line.',
+      'YEAR: 2026',
+      `${fmt.reflection[0]}: Closing.`,
+      fmt.end,
+    ].join('\n'))
+    expect(r.year).toBe(2026)
+    expect(r[fmt.letter[1]]).toBe('First line.\nSecond line.')
+    expect(r[fmt.reflection[1]]).toBe('Closing.')
+  })
 })
